@@ -492,6 +492,26 @@ cc_library(
 )
 
 cc_library(
+    name = "detections_to_text_calculator",
+    srcs = [
+        "detections_to_text_calculator.cc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":detections_to_text_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/types:optional",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "rect_transformation_calculator",
     srcs = ["rect_transformation_calculator.cc"],
     visibility = ["//visibility:public"],
@@ -512,6 +532,25 @@ cc_test(
     srcs = ["detections_to_rects_calculator_test.cc"],
     deps = [
         ":detections_to_rects_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:message_matchers",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+cc_test(
+    name = "detections_to_text_calculator_test",
+    size = "small",
+    srcs = ["detections_to_text_calculator_test.cc"],
+    deps = [
+        ":detections_to_text_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
@@ -601,6 +640,15 @@ proto_library(
 )
 
 proto_library(
+    name = "detections_to_text_calculator_proto",
+    srcs = ["detections_to_text_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
     name = "landmark_projection_calculator_proto",
     srcs = ["landmark_projection_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -660,6 +708,18 @@ mediapipe_cc_proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [":detections_to_render_data_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "detections_to_text_calculator_cc_proto",
+    srcs = ["detections_to_text_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":detections_to_text_calculator_proto"],
 )
 
 cc_library(

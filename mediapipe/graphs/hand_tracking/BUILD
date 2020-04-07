@@ -35,6 +35,7 @@ cc_library(
         "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/calculators/util:detections_to_text_calculator",
     ],
 )
 
@@ -77,7 +78,7 @@ cc_library(
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_cpu",
         "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_cpu",
-        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_renderer_cpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_renderer_cpu"
     ],
 )
 
