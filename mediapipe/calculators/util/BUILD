@@ -532,6 +532,24 @@ cc_library(
 )
 
 cc_library(
+    name = "landmarks_to_text_calculator",
+    srcs = [
+        "landmarks_to_text_calculator.cc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmarks_to_text_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/types:optional",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "rect_transformation_calculator",
     srcs = ["rect_transformation_calculator.cc"],
     visibility = ["//visibility:public"],
@@ -678,6 +696,15 @@ proto_library(
 )
 
 proto_library(
+    name = "landmarks_to_text_calculator_proto",
+    srcs = ["landmarks_to_text_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+proto_library(
     name = "landmark_projection_calculator_proto",
     srcs = ["landmark_projection_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -761,6 +788,17 @@ mediapipe_cc_proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [":rect_to_text_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "landmarks_to_text_calculator_cc_proto",
+    srcs = ["landmarks_to_text_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/util:color_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":landmarks_to_text_calculator_proto"],
 )
 
 cc_library(

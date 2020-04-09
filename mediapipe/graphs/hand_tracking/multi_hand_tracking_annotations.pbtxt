@@ -118,3 +118,9 @@ node {
   input_stream: "NORM_RECTS:multi_hand_rects"
   input_side_packet: "OUTPUT_FILE_PATH:output_annot_path_hands"
 }
+
+node {
+  calculator: "LandmarkToTextCalculator"
+  input_stream: "NORM_LANDMARKS:multi_hand_landmarks"
+  input_side_packet: "OUTPUT_FILE_PATH:output_annot_path_landmarks"
+}

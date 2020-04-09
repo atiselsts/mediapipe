@@ -37,6 +37,7 @@ cc_library(
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
         "//mediapipe/calculators/util:detections_to_text_calculator",
         "//mediapipe/calculators/util:rect_to_text_calculator",
+        "//mediapipe/calculators/util:landmarks_to_text_calculator",
     ],
 )
 

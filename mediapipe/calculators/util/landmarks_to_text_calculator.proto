@@ -18,7 +18,6 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/color.proto";
-import "mediapipe/util/render_data.proto";
 
-message RectToTextCalculatorOptions {
+message LandmarkToTextCalculatorOptions {
 }
