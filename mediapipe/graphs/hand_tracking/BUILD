@@ -77,6 +77,26 @@ mediapipe_binary_graph(
 )
 
 cc_library(
+    name = "mobile_calculators_cpu",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:merge_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/graphs/hand_tracking/subgraphs:hand_detection_cpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:hand_landmark_cpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:renderer_cpu",
+    ],
+)
+
+mediapipe_binary_graph(
+    name = "hand_tracking_mobile_cpu_binary_graph",
+    graph = "hand_tracking_mobile.pbtxt",
+    output_name = "hand_tracking_mobile_cpu.binarypb",
+    deps = [":mobile_calculators_cpu"],
+)
+
+cc_library(
     name = "multi_hand_desktop_tflite_calculators",
     deps = [
         ":desktop_offline_calculators",
