@@ -82,6 +82,7 @@ node {
 
 node {
   calculator: "LandmarkToStringCalculator"
-  input_stream: "LANDMARKS:landmarks"
+  input_stream: "NORM_LANDMARKS:landmarks"
   output_stream: "STRING:landmark_strings"
 }
+

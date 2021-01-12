@@ -61,7 +61,7 @@ class LandmarkToStringCalculator : public CalculatorBase {
 
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>();
+    cc->Inputs().Tag(kLandmarksTag).Set<std::vector<NormalizedLandmarkList>>();
 
     RET_CHECK(cc->Outputs().HasTag(kStringTag));
     cc->Outputs().Tag(kStringTag).Set<std::string>();
@@ -85,16 +85,21 @@ class LandmarkToStringCalculator : public CalculatorBase {
     if (cc->Inputs().Tag(kLandmarksTag).IsEmpty()) {
       return ::mediapipe::OkStatus();
     }
-
-    const auto& input_landmarks =
-        cc->Inputs().Tag(kLandmarksTag).Get<NormalizedLandmarkList>();
-
+    
     auto output_string = absl::make_unique<std::string>();
-    for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+
+    const auto& landmark_lists =
+          cc->Inputs().Tag(kLandmarksTag).Get<std::vector<NormalizedLandmarkList>>();
+
+    char output_buf[100];
+    for (auto& input_landmarks : landmark_lists) {
+      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
         const NormalizedLandmark& landmark = input_landmarks.landmark(i);
-        char output_buf[100];
         sprintf(output_buf, "x=%f y=%f z=%f", landmark.x(), landmark.y(), landmark.z());
         output_string->append(output_buf);
+      }
+      sprintf(output_buf, "\n++++");
+      output_string->append(output_buf);
     }
 
     cc->Outputs()
