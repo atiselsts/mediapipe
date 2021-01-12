@@ -91,6 +91,9 @@ typedef ::mediapipe::StatusOr<OutputStreamPoller> StatusOrPoller;
 //       {{"video_id", mediapipe::MakePacket<std::string>("Ex-uGhDzue4")}}));
 //   // See mediapipe/framework/graph_runner.h for an interface
 //   // to insert and extract packets from a graph as it runs.
+//   // Once it is done using the graph, close its streams and wait till done.
+//   MP_RETURN_IF_ERROR(graph->CloseAllInputStreams());
+//   MP_RETURN_IF_ERROR(graph->WaitUntilDone());
 class CalculatorGraph {
  public:
   // Defines possible modes for adding a packet to a graph input stream.
@@ -157,8 +160,9 @@ class CalculatorGraph {
       std::function<::mediapipe::Status(const Packet&)> packet_callback);
 
   // Adds an OutputStreamPoller for a stream. This provides a synchronous,
-  // polling API for accessing a stream's output. For asynchronous output, use
-  // ObserveOutputStream. See also the helpers in tool/sink.h.
+  // polling API for accessing a stream's output. Should only be called before
+  // Run() or StartRun(). For asynchronous output, use ObserveOutputStream. See
+  // also the helpers in tool/sink.h.
   StatusOrPoller AddOutputStreamPoller(const std::string& stream_name);
 
   // Gets output side packet by name after the graph is done. However, base
@@ -299,6 +303,13 @@ class CalculatorGraph {
   // Adds the error to the vector of errors.
   void RecordError(const ::mediapipe::Status& error)
       ABSL_LOCKS_EXCLUDED(error_mutex_);
+
+  // Combines errors into a status. Returns true if the vector of errors is
+  // non-empty.
+  bool GetCombinedErrors(const std::string& error_prefix,
+                         ::mediapipe::Status* error_status);
+  // Convenience overload which specifies a default error prefix.
+  bool GetCombinedErrors(::mediapipe::Status* error_status);
 
   // Returns the maximum input stream queue size.
   int GetMaxInputStreamQueueSize();
@@ -461,13 +472,13 @@ class CalculatorGraph {
   //
   // Only called by InitializeExecutors().
   ::mediapipe::Status InitializeDefaultExecutor(
-      const ThreadPoolExecutorOptions& default_executor_options,
+      const ThreadPoolExecutorOptions* default_executor_options,
       bool use_application_thread);
 
   // Creates a thread pool as the default executor. The num_threads argument
   // overrides the num_threads field in default_executor_options.
   ::mediapipe::Status CreateDefaultThreadPool(
-      const ThreadPoolExecutorOptions& default_executor_options,
+      const ThreadPoolExecutorOptions* default_executor_options,
       int num_threads);
 
   // Returns true if |name| is a reserved executor name.
@@ -500,13 +511,6 @@ class CalculatorGraph {
   // |*status| to the new combined errors on return.
   void CleanupAfterRun(::mediapipe::Status* status)
       ABSL_LOCKS_EXCLUDED(error_mutex_);
-
-  // Combines errors into a status. Returns true if the vector of errors is
-  // non-empty.
-  bool GetCombinedErrors(const std::string& error_prefix,
-                         ::mediapipe::Status* error_status);
-  // Convenience overload which specifies a default error prefix.
-  bool GetCombinedErrors(::mediapipe::Status* error_status);
 
   // Calls HandlePreRunStatus or HandleStatus on the StatusHandlers. Which one
   // is called depends on the GraphRunState parameter (PRE_RUN or POST_RUN).

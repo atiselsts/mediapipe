@@ -46,8 +46,16 @@ class Subgraph {
 
   // Returns options of a specific type.
   template <typename T>
-  static T GetOptions(Subgraph::SubgraphOptions supgraph_options) {
+  static T GetOptions(const Subgraph::SubgraphOptions& supgraph_options) {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
+  }
+
+  // Returns the CalculatorGraphConfig::Node specifying the subgraph.
+  // This provides to Subgraphs the same graph information that GetContract
+  // provides to Calculators.
+  static CalculatorGraphConfig::Node GetNode(
+      const Subgraph::SubgraphOptions& supgraph_options) {
+    return supgraph_options;
   }
 };
 
@@ -93,6 +101,10 @@ class GraphRegistry {
   // which is used in place of the GlobalFactoryRegistry.
   // Ownership of the specified FunctionRegistry is not transferred.
   GraphRegistry(FunctionRegistry<std::unique_ptr<Subgraph>>* factories);
+
+  // Registers a graph config builder type, using a factory function.
+  void Register(const std::string& type_name,
+                std::function<std::unique_ptr<Subgraph>()> factory);
 
   // Registers a graph config by name.
   void Register(const std::string& type_name,

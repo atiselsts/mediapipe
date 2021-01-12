@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/container/node_hash_map.h"
 #include "mediapipe/calculators/util/detection_label_id_to_text_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
@@ -52,7 +53,7 @@ class DetectionLabelIdToTextCalculator : public CalculatorBase {
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
  private:
-  std::unordered_map<int, std::string> label_map_;
+  absl::node_hash_map<int, std::string> label_map_;
 };
 REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
 
@@ -71,16 +72,23 @@ REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
   const auto& options =
       cc->Options<::mediapipe::DetectionLabelIdToTextCalculatorOptions>();
 
-  std::string string_path;
-  ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(options.label_map_path()));
-  std::string label_map_string;
-  MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
+  if (options.has_label_map_path()) {
+    std::string string_path;
+    ASSIGN_OR_RETURN(string_path,
+                     PathToResourceAsFile(options.label_map_path()));
+    std::string label_map_string;
+    MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 
-  std::istringstream stream(label_map_string);
-  std::string line;
-  int i = 0;
-  while (std::getline(stream, line)) {
-    label_map_[i++] = line;
+    std::istringstream stream(label_map_string);
+    std::string line;
+    int i = 0;
+    while (std::getline(stream, line)) {
+      label_map_[i++] = line;
+    }
+  } else {
+    for (int i = 0; i < options.label_size(); ++i) {
+      label_map_[i] = options.label(i);
+    }
   }
   return ::mediapipe::OkStatus();
 }

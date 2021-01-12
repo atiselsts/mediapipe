@@ -91,7 +91,7 @@ class GlSyncPoint {
   // Returns whether the sync point has been reached. Does not block.
   virtual bool IsReady() = 0;
 
-  const GlContext& GetContext() { return *gl_context_; }
+  const std::shared_ptr<GlContext>& GetContext() { return gl_context_; }
 
  protected:
   std::shared_ptr<GlContext> gl_context_;
@@ -348,10 +348,28 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   void DestroyContext();
 
   bool HasContext() const;
+
+  // This function clears out any tripped gl Errors and just logs them. This
+  // is used by code that needs to check glGetError() to know if it succeeded,
+  // but can't rely on the existing state to be 'clean'.
+  void ForceClearExistingGlErrors();
+
+  // Returns true if there were any GL errors. Note that this may be a no-op
+  // for performance reasons in some contexts (specifically Emscripten opt).
   bool CheckForGlErrors();
+
+  // Same as `CheckForGLErrors()` but with the option of forcing the check
+  // even if we would otherwise skip for performance reasons.
+  bool CheckForGlErrors(bool force);
+
   void LogUncheckedGlErrors(bool had_gl_errors);
   ::mediapipe::Status GetGlExtensions();
   ::mediapipe::Status GetGlExtensionsCompat();
+
+  // Make the context current, run gl_func, and restore the previous context.
+  // Internal helper only; callers should use Run or RunWithoutWaiting instead,
+  // which delegates to the dedicated thread if required.
+  ::mediapipe::Status SwitchContextAndRun(GlStatusFunction gl_func);
 
   // The following ContextBinding functions have platform-specific
   // implementations.
@@ -380,6 +398,9 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Changes should be guarded by mutex_. However, we use simple atomic
   // loads for efficiency on the fast path.
   std::atomic<int64_t> gl_finish_count_ = ATOMIC_VAR_INIT(0);
+  std::atomic<int64_t> gl_finish_count_target_ = ATOMIC_VAR_INIT(0);
+
+  GlContext* context_waiting_on_ ABSL_GUARDED_BY(mutex_) = nullptr;
 
   // This mutex is held by a thread while this GL context is current on that
   // thread. Since it may be held for extended periods of time, it should not

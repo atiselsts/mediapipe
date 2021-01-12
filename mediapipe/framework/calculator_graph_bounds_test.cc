@@ -28,6 +28,8 @@
 namespace mediapipe {
 namespace {
 
+constexpr int kIntTestValue = 33;
+
 typedef std::function<::mediapipe::Status(CalculatorContext* cc)>
     CalculatorContextFunction;
 
@@ -90,11 +92,11 @@ class IntAdderCalculator : public CalculatorBase {
       cc->Inputs().Index(i).Set<int>();
     }
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
@@ -267,11 +269,11 @@ class Delay20Calculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(20));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(TimestampDiff(20));
     cc->Outputs().Index(0).AddPacket(MakePacket<int>(0).At(Timestamp(0)));
     return ::mediapipe::OkStatus();
   }
@@ -617,8 +619,9 @@ TEST(CalculatorGraphBoundsTest, ImmediateHandlerBounds) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
   // Add four packets into the graph.
-  for (int i = 0; i < 4; ++i) {
-    Packet p = MakePacket<int>(33).At(Timestamp(i));
+  constexpr int kNumInputs = 4;
+  for (int i = 0; i < kNumInputs; ++i) {
+    Packet p = MakePacket<int>(kIntTestValue).At(Timestamp(i));
     MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
   }
 
@@ -638,11 +641,11 @@ class OffsetBoundCalculator : public CalculatorBase {
   static ::mediapipe::Status GetContract(CalculatorContract* cc) {
     cc->Inputs().Index(0).Set<int>();
     cc->Outputs().Index(0).Set<int>();
+    cc->SetTimestampOffset(TimestampDiff(0));
     return ::mediapipe::OkStatus();
   }
 
   ::mediapipe::Status Open(CalculatorContext* cc) final {
-    cc->SetOffset(0);
     return ::mediapipe::OkStatus();
   }
 
@@ -709,7 +712,7 @@ REGISTER_CALCULATOR(FuturePacketCalculator);
 // produces no output packets.
 TEST(CalculatorGraphBoundsTest, OffsetBoundPropagation) {
   // OffsetBoundCalculator produces only timestamp bounds.
-  // The PassthroughCalculator delivers an output packet whenever the
+  // The PassThroughCalculator delivers an output packet whenever the
   // OffsetBoundCalculator delivers a timestamp bound.
   CalculatorGraphConfig config =
       ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"(
@@ -740,7 +743,7 @@ TEST(CalculatorGraphBoundsTest, OffsetBoundPropagation) {
   // Add four packets into the graph.
   constexpr int kNumInputs = 4;
   for (int i = 0; i < kNumInputs; ++i) {
-    Packet p = MakePacket<int>(33).At(Timestamp(i));
+    Packet p = MakePacket<int>(kIntTestValue).At(Timestamp(i));
     MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
   }
 
@@ -791,12 +794,15 @@ TEST(CalculatorGraphBoundsTest, BoundWithoutInputPackets) {
   // Add four packets into the graph.
   constexpr int kNumInputs = 4;
   for (int i = 0; i < kNumInputs; ++i) {
-    Packet p = MakePacket<int>(33).At(Timestamp(i));
+    Packet p = MakePacket<int>(kIntTestValue).At(Timestamp(i));
     MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
     MP_ASSERT_OK(graph.WaitUntilIdle());
   }
 
-  // No packets arrive, because updated timestamp bounds do not invoke
+  // No packets arrive, because FuturePacketCalculator produces 4 packets but
+  // OffsetBoundCalculator relays only the 4 timestamps without any packets, and
+  // BoundToPacketCalculator does not process timestamps using
+  // SetProcessTimestampBounds. Thus, the graph does not invoke
   // BoundToPacketCalculator::Process.
   MP_ASSERT_OK(graph.WaitUntilIdle());
   EXPECT_EQ(output_packets.size(), 0);
@@ -1138,6 +1144,8 @@ class ProcessBoundToPacketCalculator : public CalculatorBase {
   ::mediapipe::Status Process(CalculatorContext* cc) final {
     for (int i = 0; i < cc->Outputs().NumEntries(); ++i) {
       Timestamp t = cc->Inputs().Index(i).Value().Timestamp();
+      // Create a new packet for each input stream with a new timestamp bound,
+      // as long as the new timestamp satisfies the output timestamp bound.
       if (t == cc->InputTimestamp() &&
           t >= cc->Outputs().Index(i).NextTimestampBound()) {
         cc->Outputs().Index(i).Add(new auto(t), t);
@@ -1168,6 +1176,8 @@ class ImmediatePassthroughCalculator : public CalculatorBase {
       if (!cc->Inputs().Index(i).IsEmpty()) {
         cc->Outputs().Index(i).AddPacket(cc->Inputs().Index(i).Value());
       } else {
+        // Update the output stream "i" nextTimestampBound to the timestamp at
+        // which a packet may next be available in input stream "i".
         Timestamp input_bound =
             cc->Inputs().Index(i).Value().Timestamp().NextAllowedInStream();
         if (cc->Outputs().Index(i).NextTimestampBound() < input_bound) {
@@ -1219,33 +1229,22 @@ void TestProcessForEmptyInputs(const std::string& input_stream_handler) {
   MP_ASSERT_OK(graph.StartRun({}));
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  // Add four packets into the graph.
+  // Add four packets into the graph at ts {0, 10, 20, 30}.
   constexpr int kFutureMicros = FuturePacketCalculator::kOutputFutureMicros;
-  Packet p;
-  p = MakePacket<int>(33).At(Timestamp(0));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
+  constexpr int kNumInputs = 4;
+  std::vector<Timestamp> expected;
+  for (int i = 0; i < kNumInputs; ++i) {
+    const int ts = i * 10;
+    Packet p = MakePacket<int>(kIntTestValue).At(Timestamp(ts));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
 
-  p = MakePacket<int>(33).At(Timestamp(10));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
-
-  p = MakePacket<int>(33).At(Timestamp(20));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
-
-  p = MakePacket<int>(33).At(Timestamp(30));
-  MP_ASSERT_OK(graph.AddPacketToInputStream("input", p));
-  MP_ASSERT_OK(graph.WaitUntilIdle());
+    expected.emplace_back(Timestamp(ts + kFutureMicros));
+  }
 
   // Packets arrive.
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  EXPECT_EQ(bounds_ts_packets.size(), 4);
-
-  std::vector<Timestamp> expected = {
-      Timestamp(0 + kFutureMicros), Timestamp(10 + kFutureMicros),
-      Timestamp(20 + kFutureMicros), Timestamp(30 + kFutureMicros)};
-  EXPECT_EQ(GetContents<Timestamp>(bounds_ts_packets), expected);
+  EXPECT_EQ(bounds_ts_packets.size(), kNumInputs);
 
   // Shutdown the graph.
   MP_ASSERT_OK(graph.CloseAllPacketSources());
@@ -1335,34 +1334,168 @@ TEST(CalculatorGraphBoundsTest, ProcessTimestampBounds_Passthrough) {
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
   // Add four packets to input_0.
-  for (int i = 0; i < 4; ++i) {
-    Packet p = MakePacket<int>(33).At(Timestamp(i * 10));
+  constexpr int kNumInputs0 = 4;
+  std::vector<Timestamp> expected_output_0;
+  for (int i = 0; i < kNumInputs0; ++i) {
+    const int ts = i * 10;
+    Packet p = MakePacket<int>(kIntTestValue).At(Timestamp(ts));
     MP_ASSERT_OK(graph.AddPacketToInputStream("input_0", p));
     MP_ASSERT_OK(graph.WaitUntilIdle());
+
+    expected_output_0.emplace_back(Timestamp(ts));
   }
 
   // Packets arrive.
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  EXPECT_EQ(output_0_packets.size(), 4);
+  EXPECT_EQ(output_0_packets.size(), kNumInputs0);
+  // No packets were pushed in "input_1".
   EXPECT_EQ(output_1_packets.size(), 0);
-  std::vector<Timestamp> expected =  //
-      {Timestamp(0), Timestamp(10), Timestamp(20), Timestamp(30)};
-  EXPECT_EQ(GetContents<Timestamp>(output_0_packets), expected);
+  EXPECT_EQ(GetContents<Timestamp>(output_0_packets), expected_output_0);
 
-  // Add two timestamp bounds to bound_1.
-  for (int i = 0; i < 2; ++i) {
-    Packet p = MakePacket<int>(33).At(Timestamp(10 + i * 10));
+  // Add two timestamp bounds to "input_1" and update "bound_1" at {10, 20}.
+  constexpr int kNumInputs1 = 2;
+  std::vector<Timestamp> expected_output_1;
+  for (int i = 0; i < kNumInputs1; ++i) {
+    const int ts = 10 + i * 10;
+    Packet p = MakePacket<int>(kIntTestValue).At(Timestamp(ts));
     MP_ASSERT_OK(graph.AddPacketToInputStream("input_1", p));
     MP_ASSERT_OK(graph.WaitUntilIdle());
+
+    expected_output_1.emplace_back(Timestamp(ts));
   }
 
   // Bounds arrive.
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  EXPECT_EQ(output_0_packets.size(), 4);
-  EXPECT_EQ(output_1_packets.size(), 2);
-  expected =  //
-      {Timestamp(10), Timestamp(20)};
-  EXPECT_EQ(GetContents<Timestamp>(output_1_packets), expected);
+  EXPECT_EQ(output_0_packets.size(), kNumInputs0);
+  EXPECT_EQ(output_1_packets.size(), kNumInputs1);
+  EXPECT_EQ(GetContents<Timestamp>(output_1_packets), expected_output_1);
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+// A Calculator that sends a timestamp bound for every other input.
+class OccasionalBoundCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).Set<int>();
+    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+    return ::mediapipe::OkStatus();
+  }
+
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    absl::SleepFor(absl::Milliseconds(1));
+    if (cc->InputTimestamp().Value() % 20 == 0) {
+      Timestamp bound = cc->InputTimestamp().NextAllowedInStream();
+      cc->Outputs().Index(0).SetNextTimestampBound(
+          std::max(bound, cc->Outputs().Index(0).NextTimestampBound()));
+    }
+    return ::mediapipe::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(OccasionalBoundCalculator);
+
+// This test fails without the fix in CL/324708313, because
+// PropagateUpdatesToMirrors is called with decreasing next_timestamp_bound,
+// because each parallel thread in-flight computes next_timestamp_bound using
+// a separate OutputStreamShard::NextTimestampBound.
+TEST(CalculatorGraphBoundsTest, MaxInFlightWithOccasionalBound) {
+  // OccasionalCalculator runs on parallel threads and sends ts occasionally.
+  std::string config_str = R"(
+            input_stream: "input_0"
+            node {
+              calculator: "OccasionalBoundCalculator"
+              input_stream: "input_0"
+              output_stream: "output_0"
+              max_in_flight: 5
+            }
+            num_threads: 4
+          )";
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+  CalculatorGraph graph;
+  std::vector<Packet> output_0_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_0", [&](const Packet& p) {
+    output_0_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Send in packets.
+  for (int i = 0; i < 9; ++i) {
+    const int ts = 10 + i * 10;
+    Packet p = MakePacket<int>(i).At(Timestamp(ts));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input_0", p));
+  }
+
+  // Only bounds arrive.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(output_0_packets.size(), 0);
+
+  // Shutdown the graph.
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+// A Calculator that uses both SetTimestampOffset and SetNextTimestampBound.
+class OffsetAndBoundCalculator : public CalculatorBase {
+ public:
+  static ::mediapipe::Status GetContract(CalculatorContract* cc) {
+    cc->Inputs().Index(0).Set<int>();
+    cc->Outputs().Index(0).SetSameAs(&cc->Inputs().Index(0));
+    cc->SetTimestampOffset(TimestampDiff(0));
+    return ::mediapipe::OkStatus();
+  }
+  ::mediapipe::Status Open(CalculatorContext* cc) final {
+    return ::mediapipe::OkStatus();
+  }
+  ::mediapipe::Status Process(CalculatorContext* cc) final {
+    if (cc->InputTimestamp().Value() % 20 == 0) {
+      cc->Outputs().Index(0).SetNextTimestampBound(Timestamp(10000));
+    }
+    return ::mediapipe::OkStatus();
+  }
+};
+REGISTER_CALCULATOR(OffsetAndBoundCalculator);
+
+// This test shows that the bound defined by SetOffset is ignored
+// if it is superseded by SetNextTimestampBound.
+TEST(CalculatorGraphBoundsTest, OffsetAndBound) {
+  // OffsetAndBoundCalculator runs on parallel threads and sends ts
+  // occasionally.
+  std::string config_str = R"(
+            input_stream: "input_0"
+            node {
+              calculator: "OffsetAndBoundCalculator"
+              input_stream: "input_0"
+              output_stream: "output_0"
+            }
+          )";
+  CalculatorGraphConfig config =
+      ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(config_str);
+  CalculatorGraph graph;
+  std::vector<Packet> output_0_packets;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.ObserveOutputStream("output_0", [&](const Packet& p) {
+    output_0_packets.push_back(p);
+    return ::mediapipe::OkStatus();
+  }));
+  MP_ASSERT_OK(graph.StartRun({}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  // Send in packets.
+  for (int i = 0; i < 9; ++i) {
+    const int ts = 10 + i * 10;
+    Packet p = MakePacket<int>(i).At(Timestamp(ts));
+    MP_ASSERT_OK(graph.AddPacketToInputStream("input_0", p));
+  }
+
+  // Only bounds arrive.
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  EXPECT_EQ(output_0_packets.size(), 0);
 
   // Shutdown the graph.
   MP_ASSERT_OK(graph.CloseAllPacketSources());

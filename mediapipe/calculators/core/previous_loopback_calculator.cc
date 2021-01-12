@@ -93,8 +93,7 @@ class PreviousLoopbackCalculator : public CalculatorBase {
         // MAIN packet, hence not caring about corresponding loop packet.
         loop_timestamp = Timestamp::Unset();
       }
-      main_packet_specs_.push_back({.timestamp = main_packet.Timestamp(),
-                                    .loop_timestamp = loop_timestamp});
+      main_packet_specs_.push_back({main_packet.Timestamp(), loop_timestamp});
       prev_main_ts_ = main_packet.Timestamp();
     }
 
@@ -129,11 +128,17 @@ class PreviousLoopbackCalculator : public CalculatorBase {
         loop_packets_.pop_front();
         main_packet_specs_.pop_front();
       }
+
+      // We can close PREV_LOOP output stream as soon as we processed last
+      // possible MAIN packet. That can happen in two cases:
+      // a) Non-empty MAIN packet has been received with Timestamp::Max()
+      // b) Empty MAIN packet has been received with Timestamp::Max() indicating
+      //    MAIN is done.
+      if (main_spec.timestamp == Timestamp::Done().PreviousAllowedInStream()) {
+        prev_loop.Close();
+      }
     }
 
-    if (main_packet_specs_.empty() && cc->Inputs().Get(main_id_).IsDone()) {
-      prev_loop.Close();
-    }
     return ::mediapipe::OkStatus();
   }
 

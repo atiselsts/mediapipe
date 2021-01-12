@@ -13,17 +13,14 @@
 # limitations under the License.
 #
 
-load(
-    "//mediapipe/framework/port:build_config.bzl",
-    "mediapipe_cc_proto_library",
-)
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "data_as_c_string",
     "mediapipe_binary_graph",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
@@ -44,9 +41,10 @@ cc_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "calculator_graph_template_proto",
     srcs = ["calculator_graph_template.proto"],
+    def_py_proto = False,
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
@@ -55,43 +53,14 @@ proto_library(
     ],
 )
 
-java_proto_library(
-    name = "calculator_graph_template_java_proto",
-    visibility = ["//visibility:public"],
-    deps = [":calculator_graph_template_proto"],
-)
-
-java_lite_proto_library(
-    name = "calculator_graph_template_java_proto_lite",
-    strict_deps = 0,
-    visibility = ["//visibility:public"],
-    deps = [":calculator_graph_template_proto"],
-)
-
-proto_library(
+mediapipe_proto_library(
     name = "source_proto",
     srcs = ["source.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "calculator_graph_template_cc_proto",
-    srcs = ["calculator_graph_template.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework/deps:proto_descriptor_cc_proto",
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
     ],
-    visibility = ["//visibility:public"],
-    deps = [":calculator_graph_template_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "source_cc_proto",
-    srcs = ["source.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":source_proto"],
 )
 
 cc_binary(
@@ -163,10 +132,12 @@ cc_library(
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:input_stream_shard",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/tool:type_util",
     ],
 )
 
@@ -371,6 +342,9 @@ cc_library(
     name = "type_util",
     hdrs = ["type_util.h"],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
+    deps = [
+        "//mediapipe/framework:port",
+    ],
 )
 
 cc_library(
@@ -547,20 +521,14 @@ data_as_c_string(
     outs = ["test_binarypb.inc"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "node_chain_subgraph_proto",
     srcs = ["node_chain_subgraph.proto"],
+    visibility = ["//mediapipe:__subpackages__"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "node_chain_subgraph_cc_proto",
-    srcs = ["node_chain_subgraph.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//mediapipe:__subpackages__"],
-    deps = [":node_chain_subgraph_proto"],
 )
 
 cc_test(
@@ -599,4 +567,40 @@ cc_test(
         "//mediapipe/framework/tool/testdata:nested_test_subgraph",
         "@com_google_absl//absl/strings",
     ],
+)
+
+cc_library(
+    name = "test_util",
+    testonly = 1,
+    srcs = ["test_util.cc"],
+    hdrs = ["test_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:advanced_proto",
+        "//mediapipe/framework/port:gtest",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/port:logging",
+    ] + select({
+        "//conditions:default": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+        "//mediapipe:android": [
+            "//mediapipe/util/android/file/base",
+        ],
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [
+            "//mediapipe/framework/port:file_helpers",
+        ],
+    }),
+)
+
+exports_files(
+    ["build_defs.bzl"],
+    visibility = ["//mediapipe/framework:__subpackages__"],
 )

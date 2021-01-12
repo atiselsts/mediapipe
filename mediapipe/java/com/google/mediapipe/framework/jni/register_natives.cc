@@ -15,6 +15,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/register_natives.h"
 
 #include "absl/strings/str_format.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/class_registry.h"
 
 #if defined(__ANDROID__)
@@ -56,6 +57,19 @@ void AddJNINativeMethod(std::vector<JNINativeMethodStrings> *methods,
 
 void RegisterNativesVector(JNIEnv *env, jclass cls,
                            const std::vector<JNINativeMethodStrings> &methods) {
+  // A client Java project may not use some methods and classes that we attempt
+  // to register and could be removed by Proguard. In that case, we want to
+  // avoid triggering a crash due to ClassNotFoundException, so we are trading
+  // safety check here in exchange for flexibility to list out all registrations
+  // without worrying about usage subset by client Java projects.
+  if (!cls || methods.empty()) {
+    LOG(INFO) << "Skipping registration and clearing exception. Class or "
+                 "native methods not found, may be unused and/or trimmed by "
+                 "Proguard.";
+    env->ExceptionClear();
+    return;
+  }
+
   JNINativeMethod *methods_array = new JNINativeMethod[methods.size()];
   for (int i = 0; i < methods.size(); i++) {
     JNINativeMethod jniNativeMethod{
@@ -97,6 +111,13 @@ void RegisterGraphNatives(JNIEnv *env) {
                      (void *)&GRAPH_METHOD(nativeStartRunningGraph));
   AddJNINativeMethod(&graph_methods, graph, "nativeSetParentGlContext", "(JJ)V",
                      (void *)&GRAPH_METHOD(nativeSetParentGlContext));
+  AddJNINativeMethod(&graph_methods, graph, "nativeCloseAllPacketSources",
+                     "(J)V",
+                     (void *)&GRAPH_METHOD(nativeCloseAllPacketSources));
+  AddJNINativeMethod(&graph_methods, graph, "nativeWaitUntilGraphDone", "(J)V",
+                     (void *)&GRAPH_METHOD(nativeWaitUntilGraphDone));
+  AddJNINativeMethod(&graph_methods, graph, "nativeReleaseGraph", "(J)V",
+                     (void *)&GRAPH_METHOD(nativeReleaseGraph));
   RegisterNativesVector(env, graph_class, graph_methods);
 }
 
@@ -160,6 +181,9 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
       &packet_creator_methods, packet_creator, "nativeCreateFloatImageFrame",
       "(JLjava/nio/ByteBuffer;II)J",
       (void *)&PACKET_CREATOR_METHOD(nativeCreateFloatImageFrame));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateInt32", "(JI)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateInt32));
   RegisterNativesVector(env, packet_creator_class, packet_creator_methods);
 }
 

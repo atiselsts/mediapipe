@@ -15,7 +15,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
@@ -55,22 +55,6 @@ proto_library(
     srcs = ["tensorflow_inference_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-proto_library(
-    name = "tensorflow_session_from_saved_model_generator_proto",
-    srcs = ["tensorflow_session_from_saved_model_generator.proto"],
-    visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:packet_generator_proto"],
-)
-
-proto_library(
-    name = "tensorflow_session_from_saved_model_calculator_proto",
-    srcs = ["tensorflow_session_from_saved_model_calculator.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework:calculator_proto",
-    ],
 )
 
 proto_library(
@@ -212,7 +196,10 @@ mediapipe_cc_proto_library(
 mediapipe_cc_proto_library(
     name = "tensorflow_session_from_saved_model_generator_cc_proto",
     srcs = ["tensorflow_session_from_saved_model_generator.proto"],
-    cc_deps = ["//mediapipe/framework:packet_generator_cc_proto"],
+    cc_deps = [
+        "//mediapipe/framework:packet_generator_cc_proto",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
+    ],
     visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_saved_model_generator_proto"],
 )
@@ -220,7 +207,10 @@ mediapipe_cc_proto_library(
 mediapipe_cc_proto_library(
     name = "tensorflow_session_from_saved_model_calculator_cc_proto",
     srcs = ["tensorflow_session_from_saved_model_calculator.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
+    ],
     visibility = ["//visibility:public"],
     deps = [":tensorflow_session_from_saved_model_calculator_proto"],
 )
@@ -321,7 +311,6 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_lib_lite",
         ],
     }),
     alwayslink = 1,
@@ -343,7 +332,7 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_lib_lite",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
     }),
     alwayslink = 1,
@@ -437,6 +426,10 @@ cc_library(
     deps = [
         ":tensorflow_session",
         ":tensorflow_inference_calculator_cc_proto",
+        "//mediapipe/framework:timestamp",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/strings",
@@ -444,15 +437,17 @@ cc_library(
         "//mediapipe/framework/deps:clock",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework:packet",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
         ],
     }),
     alwayslink = 1,
@@ -470,10 +465,10 @@ cc_library(
             "@org_tensorflow//tensorflow/core:core",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
         ],
     }),
 )
@@ -488,6 +483,8 @@ cc_library(
         "//mediapipe/calculators/tensorflow:tensorflow_session_from_frozen_graph_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/tool:status_util",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
     ] + select({
@@ -496,11 +493,11 @@ cc_library(
             "@org_tensorflow//tensorflow/core:core",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
             "//mediapipe/android/file/base",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
             "//mediapipe/android/file/base",
         ],
     }),
@@ -518,6 +515,8 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [
@@ -525,11 +524,11 @@ cc_library(
             "@org_tensorflow//tensorflow/core:core",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_tensorflow_lib_lite_nortti_lite_protos",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
             "//mediapipe/android/file/base",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:ios_tensorflow_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
             "//mediapipe/android/file/base",
         ],
     }),
@@ -637,7 +636,7 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_lib_lite",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
     }),
     alwayslink = 1,
@@ -673,7 +672,7 @@ cc_library(
             "@org_tensorflow//tensorflow/core:framework",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_lib_lite",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
     }),
     alwayslink = 1,
@@ -929,6 +928,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -954,6 +954,7 @@ cc_test(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/core:all_kernels",
         "@org_tensorflow//tensorflow/core:direct_session",
+        "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
 )
 
@@ -1109,11 +1110,11 @@ cc_test(
             "@org_tensorflow//tensorflow/core:direct_session",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:android_tensorflow_lib_with_ops_lite_proto_no_rtti_lib",
-            "@org_tensorflow//tensorflow/core:android_tensorflow_test_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_test_lib",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:ios_tensorflow_test_lib",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_test_lib",
         ],
     }),
 )

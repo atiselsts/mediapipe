@@ -150,7 +150,7 @@ static ::mediapipe::Status PrefixNames(std::string prefix,
     const proto_ns::RepeatedPtrField<ProtoString>& dst_streams) {
   ASSIGN_OR_RETURN(auto src_map, tool::TagMap::Create(src_streams));
   ASSIGN_OR_RETURN(auto dst_map, tool::TagMap::Create(dst_streams));
-  for (auto it : dst_map->Mapping()) {
+  for (const auto& it : dst_map->Mapping()) {
     const std::string& tag = it.first;
     const TagMap::TagData* src_tag_data =
         ::mediapipe::FindOrNull(src_map->Mapping(), tag);
@@ -314,6 +314,26 @@ static ::mediapipe::Status PrefixNames(std::string prefix,
     }
   }
   return ::mediapipe::OkStatus();
+}
+
+CalculatorGraphConfig MakeSingleNodeGraph(CalculatorGraphConfig::Node node) {
+  using RepeatedStringField = proto_ns::RepeatedPtrField<ProtoString>;
+  struct Connections {
+    const RepeatedStringField& node_conns;
+    RepeatedStringField* graph_conns;
+  };
+  CalculatorGraphConfig config;
+  for (const Connections& item : std::vector<Connections>{
+           {node.input_stream(), config.mutable_input_stream()},
+           {node.output_stream(), config.mutable_output_stream()},
+           {node.input_side_packet(), config.mutable_input_side_packet()},
+           {node.output_side_packet(), config.mutable_output_side_packet()}}) {
+    for (const auto& conn : item.node_conns) {
+      *item.graph_conns->Add() = conn;
+    }
+  }
+  *config.add_node() = std::move(node);
+  return config;
 }
 
 }  // namespace tool

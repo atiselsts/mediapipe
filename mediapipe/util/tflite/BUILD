@@ -13,23 +13,39 @@
 # limitations under the License.
 #
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 package(default_visibility = [
     "//mediapipe:__subpackages__",
 ])
 
 cc_library(
+    name = "config",
+    hdrs = ["config.h"],
+    features = ["-parse_headers"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+    ],
+)
+
+cc_library(
     name = "cpu_op_resolver",
     srcs = ["cpu_op_resolver.cc"],
     hdrs = ["cpu_op_resolver.h"],
+    visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
+        "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
+    # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
+    # with `tensorflow.lite.python.interpreter.InterpreterWithCustomOps`.
+    alwayslink = 1,
 )
 
 cc_library(
@@ -43,35 +59,42 @@ cc_library(
 )
 
 cc_library(
-    name = "tensor_buffer",
-    srcs = ["tensor_buffer.cc"],
-    hdrs = ["tensor_buffer.h"],
-    deps = [
-        "@org_tensorflow//tensorflow/lite:framework",
-        "@com_google_absl//absl/memory",
-        "//mediapipe/framework:port",
-    ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//mediapipe:ios": [
-            "//mediapipe/gpu:MPPMetalUtil",
-            "//mediapipe/gpu:gl_base",
-        ],
+    name = "tflite_gpu_runner",
+    srcs = select({
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [],
+        "//conditions:default": ["tflite_gpu_runner.cc"],
+    }),
+    hdrs = select({
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [],
+        "//conditions:default": ["tflite_gpu_runner.h"],
+    }),
+    deps = select({
+        "//mediapipe:ios": [],
+        "//mediapipe:macos": [],
         "//conditions:default": [
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
-            "//mediapipe/gpu:gl_base",
-            "//mediapipe/gpu:gl_context",
+            "@com_google_absl//absl/strings",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/framework/port:status",
+            "//mediapipe/framework/port:statusor",
+            "@org_tensorflow//tensorflow/lite:framework",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common/testing:tflite_model_reader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
         ],
-    }),
-)
-
-cc_test(
-    name = "tensor_buffer_test",
-    srcs = ["tensor_buffer_test.cc"],
-    deps = [
-        ":tensor_buffer",
-        "//mediapipe/framework/port:gtest_main",
-    ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//conditions:default": [],
-    }),
+        "//mediapipe:android": [
+            "@com_google_absl//absl/strings",
+            "//mediapipe/framework/port:ret_check",
+            "//mediapipe/framework/port:status",
+            "//mediapipe/framework/port:statusor",
+            "@org_tensorflow//tensorflow/lite:framework",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/cl:api",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/common/testing:tflite_model_reader",
+            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
+        ],
+    }) + ["@org_tensorflow//tensorflow/lite/core/api"],
 )
