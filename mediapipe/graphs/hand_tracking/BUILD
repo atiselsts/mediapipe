@@ -35,6 +35,8 @@ cc_library(
         "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/video:opencv_video_decoder_calculator",
         "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+        "//mediapipe/calculators/util:rect_to_string_calculator",
+        "//mediapipe/calculators/util:landmark_to_string_calculator",
     ],
 )
 

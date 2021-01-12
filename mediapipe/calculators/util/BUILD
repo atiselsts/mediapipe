@@ -374,6 +374,24 @@ cc_library(
 )
 
 cc_library(
+    name = "landmark_to_string_calculator",
+    srcs = [
+        "landmark_to_string_calculator.cc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":landmark_to_string_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "detections_to_rects_calculator",
     srcs = [
         "detections_to_rects_calculator.cc",
@@ -384,6 +402,26 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":detections_to_rects_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/types:optional",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "rect_to_string_calculator",
+    srcs = [
+        "rect_to_string_calculator.cc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":rect_to_string_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
@@ -440,6 +478,24 @@ cc_test(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "landmark_to_string_calculator_proto",
+    srcs = ["landmark_to_string_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "rect_to_string_calculator_proto",
+    srcs = ["rect_to_string_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
     ],
 )
 
