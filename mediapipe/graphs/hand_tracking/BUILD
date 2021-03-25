@@ -82,6 +82,17 @@ cc_library(
 )
 
 cc_library(
+    name = "multi_hand_desktop_gpu_calculators",
+    deps = [
+        ":desktop_offline_calculators",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_detection_gpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_landmark_gpu",
+        "//mediapipe/graphs/hand_tracking/subgraphs:multi_hand_renderer_gpu",
+    ],
+)
+cc_library(
     name = "multi_hand_mobile_calculators",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",

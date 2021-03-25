@@ -40,3 +40,12 @@ cc_binary(
         "//mediapipe/graphs/hand_tracking:multi_hand_mobile_calculators",
     ],
 )
+
+# Linux only
+cc_binary(
+    name = "multi_hand_tracking_gpu2",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
+        "//mediapipe/graphs/hand_tracking:multi_hand_desktop_gpu_calculators",
+    ],
+)
