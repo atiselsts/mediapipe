@@ -1,0 +1,32 @@
+load(
+    "//mediapipe/framework/tool:mediapipe_graph.bzl",
+    "mediapipe_simple_subgraph",
+)
+
+#licenses(["notice"])
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["palm_detection.tflite"])
+
+mediapipe_simple_subgraph(
+    name = "is_washing_gpu",
+    graph = "is_washing_gpu.pbtxt",
+    register_as = "IsWashingGpu",
+    deps = [
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
+        "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+    ],
+)
+
+exports_files(
+    srcs = [
+        "is_washing.tflite",
+        "is_washing_labelmap.txt",
+    ],
+)
