@@ -29,13 +29,14 @@ android_binary(
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.iswashing",
-        "appName": "Hand Detection",
+        "appName": "Hand Washing Detection",
         "mainActivity": "com.google.mediapipe.apps.basic.MainActivity",
         "cameraFacingFront": "True",
         "binaryGraphName": "hand_detection_mobile_gpu.binarypb",
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",
         "flipFramesVertically": "True",
+        "converterNumBuffers": "2",
     },
     multidex = "native",
     deps = [

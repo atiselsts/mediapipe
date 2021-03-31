@@ -10,7 +10,8 @@ input_stream: "IMAGE:image"
 # particular timestamp if none of palms detected. However, the MediaPipe
 # framework will internally inform the downstream calculators of the absence of
 # this packet so that they don't wait for it unnecessarily.
-output_stream: "DETECTIONS:detections"
+#output_stream: "DETECTIONS:detections"
+output_stream: "CLASSIFICATIONS:iswashing"
 
 # Transforms an image into a 224x224 tensor while keeping the aspect ratio, and
 # therefore may result in potential letterboxing.
@@ -18,7 +19,7 @@ node {
   calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE_GPU:image"
   output_stream: "TENSORS:input_tensor"
-  output_stream: "LETTERBOX_PADDING:letterbox_padding"
+#  output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
       output_tensor_width: 224
@@ -132,18 +133,18 @@ node {
 # letterboxed image (after image transformation with the FIT scale mode) to the
 # corresponding locations on the same image with the letterbox removed (the
 # input image to the graph before image transformation).
-node {
-  calculator: "DetectionLetterboxRemovalCalculator"
-  input_stream: "DETECTIONS:simple_detections"
-  input_stream: "LETTERBOX_PADDING:letterbox_padding"
-  output_stream: "DETECTIONS:detections"
-}
+#node {
+#  calculator: "DetectionLetterboxRemovalCalculator"
+#  input_stream: "DETECTIONS:simple_detections"
+#  input_stream: "LETTERBOX_PADDING:letterbox_padding"
+#  output_stream: "DETECTIONS:detections"
+#}
 
-node {
-  calculator: "TensorsToDetectionsCalculator"
-  input_stream: "TENSORS:detection_tensors"
+#node {
+#  calculator: "TensorsToDetectionsCalculator"
+#  input_stream: "TENSORS:detection_tensors"
 #  input_side_packet: "ANCHORS:anchors"
-  output_stream: "DETECTIONS:simple_detections"
+#  output_stream: "DETECTIONS:simple_detections"
 #  options: {
 #    [mediapipe.TensorsToDetectionsCalculatorOptions.ext] {
 #      num_classes: 1
@@ -164,4 +165,19 @@ node {
 #      min_score_thresh: 0.5
 #    }
 #  }
+#}
+
+
+node {
+  calculator: "TensorsToClassificationCalculator"
+  input_stream: "TENSORS:detection_tensors"
+  output_stream: "CLASSIFICATIONS:classifications"
+  options: {
+    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+      top_k: 1
+      label_map_path: "mediapipe/modules/handwashing/washing-status.txt"
+      binary_classification: true
+    }
+  }
+
 }
