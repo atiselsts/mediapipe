@@ -23,6 +23,7 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "hand_landmark.tflite",
+    "hand_landmark_sparse.tflite",
     "handedness.txt",
 ])
 
@@ -40,7 +41,6 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
-        "//mediapipe/calculators/util:logic_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
     ],
 )
@@ -59,7 +59,6 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
-        "//mediapipe/calculators/util:logic_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
     ],
 )
@@ -74,6 +73,7 @@ mediapipe_simple_subgraph(
         ":palm_detection_detection_to_roi",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:gate_calculator",
@@ -96,6 +96,7 @@ mediapipe_simple_subgraph(
         ":palm_detection_detection_to_roi",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/core:gate_calculator",
@@ -104,7 +105,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/calculators/util:filter_collection_calculator",
-        "//mediapipe/modules/palm_detection:palm_detection_gpu",
+        "//mediapipe/modules/palm_detection:palm_detection_cpu",
     ],
 )
 

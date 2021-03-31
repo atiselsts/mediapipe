@@ -1,3 +1,5 @@
+load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_binary_graph")
+
 package(default_visibility = ["//visibility:private"])
 
 licenses(["notice"])
@@ -55,6 +57,7 @@ objc_library(
     hdrs = MEDIAPIPE_IOS_HDRS,
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         # Needed for OpenCV.
@@ -125,6 +128,7 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
@@ -164,6 +168,7 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -186,6 +191,7 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "Accelerate",
@@ -216,6 +222,7 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     data = [
         "testdata/googlelogo_color_272x92dp.png",
@@ -240,8 +247,6 @@ objc_library(
     ],
 )
 
-load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_binary_graph")
-
 [
     mediapipe_binary_graph(
         name = graph.split("/")[-1].rsplit(".", 1)[0] + "_graph",
@@ -256,9 +261,9 @@ exports_files(
     [
         "testdata/googlelogo_color_272x92dp.png",
         "testdata/googlelogo_color_272x92dp_luminance.png",
+        "testdata/sergey.png",
     ],
     visibility = [
-        "//mediapipe/feature_extraction/video/video_effects:__pkg__",
-        "//mediapipe/gpu:__pkg__",
+        "//mediapipe:__subpackages__",
     ],
 )

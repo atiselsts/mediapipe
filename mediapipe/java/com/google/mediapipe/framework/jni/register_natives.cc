@@ -103,6 +103,13 @@ void RegisterGraphNatives(JNIEnv *env) {
   AddJNINativeMethod(&graph_methods, graph, "nativeAddPacketCallback",
                      native_add_packet_callback_signature.c_str(),
                      (void *)&GRAPH_METHOD(nativeAddPacketCallback));
+  std::string packet_list_callback_name = class_registry.GetClassName(
+      mediapipe::android::ClassRegistry::kPacketListCallbackClassName);
+  std::string native_add_multi_stream_callback_signature =
+      absl::StrFormat("(JLjava/lang/List;L%s;)V", packet_list_callback_name);
+  AddJNINativeMethod(&graph_methods, graph, "nativeAddMultiStreamCallback",
+                     native_add_multi_stream_callback_signature.c_str(),
+                     (void *)&GRAPH_METHOD(nativeAddMultiStreamCallback));
   AddJNINativeMethod(&graph_methods, graph, "nativeMovePacketToInputStream",
                      "(JLjava/lang/String;JJ)V",
                      (void *)&GRAPH_METHOD(nativeMovePacketToInputStream));
@@ -184,6 +191,12 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_creator_methods, packet_creator,
                      "nativeCreateInt32", "(JI)J",
                      (void *)&PACKET_CREATOR_METHOD(nativeCreateInt32));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateFloat32", "(JF)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateFloat32));
+  AddJNINativeMethod(&packet_creator_methods, packet_creator,
+                     "nativeCreateBool", "(JZ)J",
+                     (void *)&PACKET_CREATOR_METHOD(nativeCreateBool));
   RegisterNativesVector(env, packet_creator_class, packet_creator_methods);
 }
 
@@ -203,6 +216,12 @@ void RegisterPacketGetterNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetImageData", "(JLjava/nio/ByteBuffer;)Z",
                      (void *)&PACKET_GETTER_METHOD(nativeGetImageData));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetImageWidth", "(J)I",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetImageWidth));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetImageHeight", "(J)I",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetImageHeight));
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetFloat32Vector", "(J)[F",
                      (void *)&PACKET_GETTER_METHOD(nativeGetFloat32Vector));

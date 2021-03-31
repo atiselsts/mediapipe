@@ -1,8 +1,9 @@
 ---
 layout: default
 title: Hello World! on Android
-parent: Getting Started
-nav_order: 3
+parent: MediaPipe on Android
+grand_parent: Getting Started
+nav_order: 1
 ---
 
 # Hello World! on Android
@@ -58,7 +59,7 @@ node: {
   output_stream: "luma_video"
 }
 
-# Applies the Sobel filter to luminance images sotred in RGB format.
+# Applies the Sobel filter to luminance images stored in RGB format.
 node: {
   calculator: "SobelEdgesCalculator"
   input_stream: "luma_video"
@@ -496,7 +497,7 @@ CameraHelper.CameraFacing cameraFacing =
     applicationInfo.metaData.getBoolean("cameraFacingFront", false)
         ? CameraHelper.CameraFacing.FRONT
         : CameraHelper.CameraFacing.BACK;
-cameraHelper.startCamera(this, cameraFacing, /*surfaceTexture=*/ null);
+cameraHelper.startCamera(this, cameraFacing, /*unusedSurfaceTexture=*/ null);
 ```
 
 At this point, the application should build successfully. However, when you run

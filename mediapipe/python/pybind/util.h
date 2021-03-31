@@ -45,7 +45,7 @@ inline PyObject* StatusCodeToPyError(const ::absl::StatusCode& code) {
   }
 }
 
-inline void RaisePyErrorIfNotOk(const mediapipe::Status& status) {
+inline void RaisePyErrorIfNotOk(const absl::Status& status) {
   if (!status.ok()) {
     throw RaisePyError(StatusCodeToPyError(status.code()),
                        status.message().data());
@@ -97,7 +97,8 @@ inline ::mediapipe::CalculatorGraphConfig ReadCalculatorGraphConfigFromFile(
     throw RaisePyError(PyExc_FileNotFoundError, status.message().data());
   }
   std::string graph_config_string;
-  RaisePyErrorIfNotOk(file::GetContents(file_name, &graph_config_string));
+  RaisePyErrorIfNotOk(file::GetContents(file_name, &graph_config_string,
+                                        /*read_as_binary=*/true));
   if (!graph_config_proto.ParseFromArray(graph_config_string.c_str(),
                                          graph_config_string.length())) {
     throw RaisePyError(

@@ -15,6 +15,7 @@
 load("//mediapipe/gpu:metal.bzl", "metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 
 licenses(["notice"])
 
@@ -166,6 +167,7 @@ cc_library(
     deps = [
         ":gl_base",
         ":gl_thread_collector",
+        ":gpu_buffer_format",
         "//mediapipe/framework:executor",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -244,6 +246,7 @@ objc_library(
     hdrs = ["pixel_buffer_pool_util.h"],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "Accelerate",
@@ -266,6 +269,7 @@ objc_library(
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -300,6 +304,7 @@ objc_library(
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -361,13 +366,13 @@ cc_library(
     hdrs = [
         "gpu_shared_data_internal.h",
     ],
-    defines = ["MEDIAPIPE_DISABLE_GPU"],
     visibility = ["//visibility:private"],
     deps = [
         ":graph_support",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:executor",
+        "//mediapipe/framework:port",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/gpu:gl_context_options_cc_proto",
@@ -557,6 +562,7 @@ cc_library(
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework:packet_type",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -581,6 +587,7 @@ objc_library(
     hdrs = HELPER_COMMON_HDRS,
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = HELPER_IOS_FRAMEWORKS,
     visibility = ["//visibility:public"],
@@ -593,6 +600,7 @@ objc_library(
         ":gpu_shared_data_internal",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:util",
     ],
@@ -604,6 +612,7 @@ objc_library(
     hdrs = ["MPPMetalHelper.h"],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     sdk_frameworks = [
         "CoreVideo",
@@ -816,6 +825,7 @@ mediapipe_cc_proto_library(
 objc_library(
     name = "metal_copy_calculator",
     srcs = ["MetalCopyCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -833,6 +843,7 @@ objc_library(
 objc_library(
     name = "metal_rgb_weight_calculator",
     srcs = ["MetalRgbWeightCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -849,6 +860,7 @@ objc_library(
 objc_library(
     name = "metal_sobel_calculator",
     srcs = ["MetalSobelCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -865,6 +877,7 @@ objc_library(
 objc_library(
     name = "metal_sobel_compute_calculator",
     srcs = ["MetalSobelComputeCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -881,6 +894,24 @@ objc_library(
 objc_library(
     name = "mps_sobel_calculator",
     srcs = ["MPSSobelCalculator.mm"],
+    copts = ["-std=c++17"],
+    sdk_frameworks = [
+        "CoreVideo",
+        "Metal",
+        "MetalPerformanceShaders",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":MPPMetalHelper",
+        "//mediapipe/objc:mediapipe_framework_ios",
+    ],
+    alwayslink = 1,
+)
+
+objc_library(
+    name = "mps_threshold_calculator",
+    srcs = ["MPSThresholdCalculator.mm"],
+    copts = ["-std=c++17"],
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
@@ -915,6 +946,7 @@ objc_library(
     ],
     copts = [
         "-Wno-shorten-64-to-32",
+        "-std=c++17",
     ],
     data = [
         "//mediapipe/objc:testdata/googlelogo_color_272x92dp.png",
