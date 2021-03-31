@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# Lint as: python3
 """MediaPipe SolutionBase module.
 
 MediaPipe SolutionBase is the common base class for the high-level MediaPipe
@@ -32,9 +30,12 @@ import numpy as np
 
 from google.protobuf import descriptor
 # resources dependency
+# pylint: disable=unused-import
+# pylint: enable=unused-import
 from mediapipe.framework import calculator_pb2
 # pylint: disable=unused-import
 from mediapipe.framework.formats import detection_pb2
+from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.image import image_transformation_calculator_pb2
 from mediapipe.calculators.tensor import tensors_to_detections_calculator_pb2
 from mediapipe.calculators.util import landmarks_smoothing_calculator_pb2
@@ -43,6 +44,8 @@ from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.framework.formats import rect_pb2
+from mediapipe.modules.objectron.calculators import annotation_data_pb2
+from mediapipe.modules.objectron.calculators import lift_2d_frame_annotation_to_3d_calculator_pb2
 # pylint: enable=unused-import
 from mediapipe.python._framework_bindings import calculator_graph
 from mediapipe.python._framework_bindings import image_frame
@@ -55,6 +58,8 @@ import mediapipe.python.packet_getter as packet_getter
 RGB_CHANNELS = 3
 # TODO: Enable calculator options modification for more calculators.
 CALCULATOR_TO_OPTIONS = {
+    'ConstantSidePacketCalculator':
+        constant_side_packet_calculator_pb2.ConstantSidePacketCalculatorOptions,
     'ImageTransformationCalculator':
         image_transformation_calculator_pb2
         .ImageTransformationCalculatorOptions,
@@ -67,6 +72,9 @@ CALCULATOR_TO_OPTIONS = {
     'TensorsToDetectionsCalculator':
         tensors_to_detections_calculator_pb2
         .TensorsToDetectionsCalculatorOptions,
+    'Lift2DFrameAnnotationTo3DCalculator':
+        lift_2d_frame_annotation_to_3d_calculator_pb2
+        .Lift2DFrameAnnotationTo3DCalculatorOptions,
 }
 
 
@@ -76,6 +84,7 @@ class _PacketDataType(enum.Enum):
   """The packet data types supported by the SolutionBase class."""
   STRING = 'string'
   BOOL = 'bool'
+  BOOL_LIST = 'bool_list'
   INT = 'int'
   FLOAT = 'float'
   AUDIO = 'matrix'
@@ -93,6 +102,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.STRING,
     'bool':
         _PacketDataType.BOOL,
+    '::std::vector<bool>':
+        _PacketDataType.BOOL_LIST,
     'int':
         _PacketDataType.INT,
     'float':
@@ -111,7 +122,13 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
         _PacketDataType.PROTO,
     '::mediapipe::Landmark':
         _PacketDataType.PROTO,
+    '::mediapipe::LandmarkList':
+        _PacketDataType.PROTO,
     '::mediapipe::NormalizedLandmark':
+        _PacketDataType.PROTO,
+    '::mediapipe::FrameAnnotation':
+        _PacketDataType.PROTO,
+    '::mediapipe::Trigger':
         _PacketDataType.PROTO,
     '::mediapipe::Rect':
         _PacketDataType.PROTO,
@@ -128,6 +145,8 @@ NAME_TO_TYPE: Mapping[str, '_PacketDataType'] = {
     '::std::vector<::mediapipe::DetectionList>':
         _PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::Landmark>':
+        _PacketDataType.PROTO_LIST,
+    '::std::vector<::mediapipe::LandmarkList>':
         _PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::NormalizedLandmark>':
         _PacketDataType.PROTO_LIST,
@@ -148,15 +167,14 @@ class SolutionBase:
   shutdown.
 
   Example usage:
-    hand_tracker = solution_base.SolutionBase(
-      binary_graph_path='mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu.binarypb',
-      side_inputs={'num_hands': 2})
-    # Read an image and convert the BGR image to RGB.
-    input_image = cv2.cvtColor(cv2.imread('/tmp/hand.png'), COLOR_BGR2RGB)
-    results = hand_tracker.process(input_image)
-    print(results.palm_detections)
-    print(results.multi_hand_landmarks)
-    hand_tracker.close()
+    with solution_base.SolutionBase(
+        binary_graph_path='mediapipe/modules/hand_landmark/hand_landmark_tracking_cpu.binarypb',
+        side_inputs={'num_hands': 2}) as hand_tracker:
+      # Read an image and convert the BGR image to RGB.
+      input_image = cv2.cvtColor(cv2.imread('/tmp/hand.png'), COLOR_BGR2RGB)
+      results = hand_tracker.process(input_image)
+      print(results.palm_detections)
+      print(results.multi_hand_landmarks)
   """
 
   def __init__(
@@ -198,7 +216,7 @@ class SolutionBase:
       raise ValueError(
           "Must provide exactly one of 'binary_graph_path' or 'graph_config'.")
     # MediaPipe package root path
-    root_path = os.sep.join( os.path.abspath(__file__).split(os.sep)[:-3])
+    root_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-3])
     resource_util.set_resource_dir(root_path)
     validated_graph = validated_graph_config.ValidatedGraphConfig()
     if binary_graph_path:
@@ -470,3 +488,11 @@ class SolutionBase:
     else:
       return getattr(packet_getter, 'get_' + packet_data_type.value)(
           output_packet)
+
+  def __enter__(self):
+    """A "with" statement support."""
+    return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    """Closes all the input sources and the graph."""
+    self.close()
