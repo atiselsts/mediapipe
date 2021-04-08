@@ -23,7 +23,7 @@ node {
   calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE:image"
   output_stream: "TENSORS:input_tensor"
-# output_stream: "LETTERBOX_PADDING:letterbox_padding"
+  output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
       output_tensor_width: 224
@@ -55,7 +55,7 @@ node {
 node {
   calculator: "InferenceCalculator"
   input_stream: "TENSORS:input_tensor"
-  output_stream: "TENSORS:classification"
+  output_stream: "TENSORS:classification_tensor"
   input_side_packet: "CUSTOM_OP_RESOLVER:opresolver"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
@@ -173,11 +173,12 @@ node {
 #}
 
 
-node {
-  calculator: "TfLiteTensorsToClassificationCalculator"
-  input_stream: "TENSORS:classification"
+#node {
+#  calculator: "TfLiteTensorsToClassificationCalculator"
+#  calculator: "TensorsToClassificationCalculator"
+#  input_stream: "TENSORS:classification_tensor"
 #  output_stream: "CLASSIFICATIONS:washing_status"
-  output_stream: "CLASSIFICATIONS:handedness"
+#  output_stream: "HANDEDNESS:handedness"
 
 #  options: {
 #    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
@@ -189,9 +190,37 @@ node {
 
 #  options: {
 #    [mediapipe.TfLiteTensorsToClassificationCalculator.ext] {
+#    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
 #      top_k: 1
 #      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
 #      binary_classification: true
 #    }
 #  }
+#}
+
+node {
+  calculator: "SplitTensorVectorCalculator"
+  input_stream: "classification_tensor"
+  output_stream: "classification_tensor2"
+  options: {
+    [mediapipe.SplitVectorCalculatorOptions.ext] {
+      ranges: { begin: 0 end: 2 }
+    }
+  }
+}
+
+
+# Converts the handedness tensor into a float that represents the classification
+# score of handedness.
+node {
+  calculator: "TensorsToClassificationCalculator"
+  input_stream: "TENSORS:classification_tensor2"
+  output_stream: "CLASSIFICATIONS:handedness"
+  options: {
+    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+      top_k: 1
+      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
+      binary_classification: true
+    }
+  }
 }

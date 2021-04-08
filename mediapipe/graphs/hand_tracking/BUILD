@@ -79,7 +79,9 @@ cc_library(
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:labels_to_render_data_calculator",
         "//mediapipe/modules/palm_detection:palm_detection_gpu",
+        "//mediapipe/modules/handwashing:is_washing_gpu"
     ],
 )
 

@@ -25,6 +25,7 @@ cc_library(
     name = "detection_mobile_calculators",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/modules/handwashing:is_washing_gpu"
     ],

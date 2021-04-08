@@ -43,6 +43,9 @@ mediapipe_simple_subgraph(
     graph = "palm_detection_gpu.pbtxt",
     register_as = "PalmDetectionGpu",
     deps = [
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
