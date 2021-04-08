@@ -55,7 +55,8 @@ node {
   input_side_packet: "CUSTOM_OP_RESOLVER:opresolver"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/palm_detection/palm_detection.tflite"
+#      model_path: "mediapipe/modules/palm_detection/palm_detection.tflite"
+      model_path: "mediapipe/modules/handwashing/is_washing.tflite"
       use_gpu: true
     }
   }

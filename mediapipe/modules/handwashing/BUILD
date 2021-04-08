@@ -3,11 +3,9 @@ load(
     "mediapipe_simple_subgraph",
 )
 
-#licenses(["notice"])
+licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
-
-exports_files(["palm_detection.tflite"])
 
 mediapipe_simple_subgraph(
     name = "is_washing_gpu",
@@ -19,14 +17,13 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
+        "//mediapipe/calculators/tflite:tflite_tensors_to_classification_calculator",
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
     ],
 )
 
-exports_files(
-    srcs = [
+exports_files([
         "is_washing.tflite",
-        "is_washing_labelmap.txt",
-    ],
-)
+        "washing_status.txt",
+])

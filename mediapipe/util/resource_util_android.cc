@@ -63,7 +63,15 @@ absl::Status DefaultGetResourceContents(const std::string& path,
 }  // namespace internal
 
 absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
-  // Return full path.
+//    return path;
+
+    // LOG(INFO) << "hello world";
+
+    // LOG(INFO) << "loading: " << path;
+
+    //     return path;
+
+    // Return full path.
   if (absl::StartsWith(path, "/")) {
     return path;
   }

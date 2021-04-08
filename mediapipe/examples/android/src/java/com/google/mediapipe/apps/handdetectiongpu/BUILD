@@ -38,6 +38,9 @@ android_binary(
     assets = [
         "//mediapipe/graphs/hand_tracking:hand_detection_mobile_gpu.binarypb",
         "//mediapipe/modules/palm_detection:palm_detection.tflite",
+        "//mediapipe/modules/handwashing:is_washing.tflite",
+        "//mediapipe/modules/handwashing:washing_status.txt",
+        "//mediapipe/modules/hand_landmark:handedness.txt",
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",

@@ -11,22 +11,21 @@ exports_files(glob([
     "*.pbtxt",
 ]))
 
-cc_library(
-    name = "mobile_calculators",
-    deps = [
-        "//mediapipe/calculators/core:constant_side_packet_calculator",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-        "//mediapipe/graphs/is_washing/subgraphs:hand_renderer_gpu",
-        "//mediapipe/modules/handwashing:is_washing_gpu"
-    ],
-)
+#cc_library(
+#    name = "mobile_calculators",
+#    deps = [
+#        "//mediapipe/calculators/core:constant_side_packet_calculator",
+#        "//mediapipe/calculators/core:flow_limiter_calculator",
+#        "//mediapipe/graphs/is_washing/subgraphs:hand_renderer_gpu",
+#        "//mediapipe/modules/handwashing:is_washing_gpu"
+#    ],
+#)
 
 cc_library(
     name = "detection_mobile_calculators",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
-        "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/modules/handwashing:is_washing_gpu"
     ],
 )
