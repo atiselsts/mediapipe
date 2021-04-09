@@ -14,11 +14,8 @@ mediapipe_simple_subgraph(
     deps = [
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
-#        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
-#        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/tflite:tflite_custom_op_resolver_calculator",
 
-        "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",

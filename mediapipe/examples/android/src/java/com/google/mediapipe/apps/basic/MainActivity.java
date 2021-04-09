@@ -161,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
     // Make the display view visible to start showing the preview. This triggers the
     // SurfaceHolder.Callback added to (the holder of) previewDisplayView.
     previewDisplayView.setVisibility(View.VISIBLE);
+
+    Log.e(TAG, "lolcat: camera started");
   }
 
   protected Size cameraTargetResolution() {

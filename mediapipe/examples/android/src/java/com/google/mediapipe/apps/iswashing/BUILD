@@ -7,7 +7,7 @@ cc_binary(
     linkshared = 1,
     linkstatic = 1,
     deps = [
-        "//mediapipe/graphs/hand_tracking:detection_mobile_calculators",
+        "//mediapipe/graphs/is_washing:is_washing_mobile_calculators",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
     ],
 )
@@ -22,20 +22,18 @@ android_binary(
     name = "iswashing",
     srcs = glob(["*.java"]),
     assets = [
-        "//mediapipe/graphs/is_washing:hand_detection_mobile_gpu.binarypb",
+        "//mediapipe/graphs/is_washing:is_washing_mobile_gpu.binarypb",
         "//mediapipe/modules/handwashing:is_washing.tflite",
-        "//mediapipe/modules/hand_landmark:handedness.txt",
         "//mediapipe/modules/handwashing:washing_status.txt",
-        "//mediapipe/modules/palm_detection:palm_detection.tflite",
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.iswashing",
-        "appName": "Hand Washing Detection",
+        "appName": "Handwash Detection",
         "mainActivity": "com.google.mediapipe.apps.basic.MainActivity",
         "cameraFacingFront": "True",
-        "binaryGraphName": "hand_detection_mobile_gpu.binarypb",
+        "binaryGraphName": "is_washing_mobile_gpu.binarypb",
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",
         "flipFramesVertically": "True",

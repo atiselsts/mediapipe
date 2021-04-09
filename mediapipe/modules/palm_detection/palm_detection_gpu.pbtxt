@@ -14,7 +14,7 @@ input_stream: "IMAGE:image"
 
 # Handedness of the detected hand (i.e. is hand left or right).
 # (ClassificationList)
-#output_stream: "CLASSIFICATIONS:handedness"
+output_stream: "CLASSIFICATIONS:handedness"
 
 
 # Transforms an image into a 256x256 tensor while keeping the aspect ratio, and
@@ -149,12 +149,11 @@ node {
 
 #node {
 #  calculator: "SplitTensorVectorCalculator"
-#  input_stream: "TENSORS:detection_tensors"
-#  output_stream: "TENSORS:classification_tensor"
+#  input_stream: "detection_tensors"
+#  output_stream: "classification_tensor"
 #  options: {
 #    [mediapipe.SplitVectorCalculatorOptions.ext] {
 #      ranges: { begin: 0 end: 2 }
-#      combine_outputs: true
 #    }
 #  }
 #}
@@ -162,15 +161,16 @@ node {
 
 # Converts the handedness tensor into a float that represents the classification
 # score of handedness.
-#node {
-#  calculator: "TensorsToClassificationCalculator"
+node {
+  calculator: "TensorsToClassificationCalculator"
 #  input_stream: "TENSORS:classification_tensor"
-#  output_stream: "CLASSIFICATIONS:handedness"
-#  options: {
-#    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
-#      top_k: 1
-#      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
+  input_stream: "TENSORS:detection_tensors"
+  output_stream: "CLASSIFICATIONS:handedness"
+  options: {
+    [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+      top_k: 1
+      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
 #      binary_classification: true
-#    }
-#  }
-#}
+    }
+  }
+}
