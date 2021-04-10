@@ -46,9 +46,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.ByteBuffer;
 
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
@@ -71,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
   private static final int NUM_BUFFERS = 2;
 
   private static final String OUTPUT_WASHING_STATUS = "washing_status";
+  private static final String OUTPUT_IMAGE_FRAMES = "output_video_cpu";
 
   static {
     // Load all native libraries needed by the app.
@@ -191,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
     ProtoUtil.registerTypeName(ClassificationList.class, "mediapipe.ClassificationList");
     ProtoUtil.registerTypeName(Classification.class, "mediapipe.Classification");
 
+    /*
     // print classifications on debug output
     processor.addPacketCallback(
             OUTPUT_WASHING_STATUS,
@@ -215,9 +215,21 @@ public class MainActivity extends AppCompatActivity {
 
             } catch (InvalidProtocolBufferException e) {
                 Log.e(TAG, "lolcat: got exception " + e);
-
             }
           });
+    */
+
+//    nativeGetImageData
+    processor.addPacketCallback(
+            OUTPUT_IMAGE_FRAMES,
+            (packet) -> {
+                int w = PacketGetter.getImageWidth(packet);
+                int h = PacketGetter.getImageHeight(packet);
+                ByteBuffer bb = new ByteBuffer();
+                PacketGetter.getImageData(packet, bb);
+
+                Log.e(TAG, "lolcat: got image frame w=" + w + " h=" + h);
+            });
   }
 
   // Used to obtain the content view for this application. If you are extending this class, and
