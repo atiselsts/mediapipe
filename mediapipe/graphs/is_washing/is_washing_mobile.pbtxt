@@ -5,6 +5,8 @@ input_stream: "input_video"
 # GPU image. (GpuBuffer)
 output_stream: "output_video"
 
+output_stream: "throttled_input_video_cpu"
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for HandDetectionSubgraph
 # downstream in the graph to finish its tasks before it passes through another
@@ -32,6 +34,13 @@ node {
   input_stream: "IMAGE_GPU:throttled_input_video"
   output_stream: "CLASSIFICATIONS:washing_status"
 }
+
+# Converts GPU buffer to ImageFrame for processing tracking.
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "throttled_input_video"
+#  output_stream: "throttled_input_video_cpu"
+#}
 
 # Converts classification to drawing primitives for annotation overlay.
 node {

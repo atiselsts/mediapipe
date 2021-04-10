@@ -21,17 +21,18 @@ cc_library(
 android_binary(
     name = "iswashing",
     srcs = glob(["*.java"]),
+    resource_files = glob(["res/**"]),
     assets = [
         "//mediapipe/graphs/is_washing:is_washing_mobile_gpu.binarypb",
-        "//mediapipe/modules/handwashing:is_washing.tflite",
-        "//mediapipe/modules/handwashing:washing_status.txt",
+        "//mediapipe/modules/is_washing:is_washing.tflite",
+        "//mediapipe/modules/is_washing:washing_status.txt",
     ],
     assets_dir = "",
-    manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
+    manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/iswashing:AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.iswashing",
-        "appName": "Handwash Detection",
-        "mainActivity": "com.google.mediapipe.apps.basic.MainActivity",
+        "appName": "Washing Detection",
+        "mainActivity": "com.google.mediapipe.apps.iswashing.MainActivity",
         "cameraFacingFront": "True",
         "binaryGraphName": "is_washing_mobile_gpu.binarypb",
         "inputVideoStreamName": "input_video",
@@ -42,6 +43,20 @@ android_binary(
     multidex = "native",
     deps = [
         ":mediapipe_jni_lib",
-        "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
+
+        "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
+        "//mediapipe/java/com/google/mediapipe/components:android_components",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/glutil",
+
+        "//mediapipe/framework/formats:classification_java_proto_lite",
+
+        "//third_party:androidx_appcompat",
+        "//third_party:androidx_constraint_layout",
+        "//third_party:opencv",
+        "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:com_google_guava_guava",
+
+        "@com_google_protobuf//:protobuf_javalite",
     ],
 )

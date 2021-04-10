@@ -51,7 +51,7 @@ node {
 #  input_side_packet: "CUSTOM_OP_RESOLVER:opresolver"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/handwashing/is_washing.tflite"
+      model_path: "mediapipe/modules/is_washing/is_washing.tflite"
     }
   }
 }
@@ -65,7 +65,7 @@ node {
   options: {
     [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
       top_k: 1
-      label_map_path: "mediapipe/modules/handwashing/washing_status.txt"
+      label_map_path: "mediapipe/modules/is_washing/washing_status.txt"
     }
   }
 }
