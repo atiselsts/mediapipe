@@ -31,15 +31,23 @@ node {
   calculator: "IsWashingGpu"
   input_stream: "IMAGE_GPU:throttled_input_video"
   output_stream: "CLASSIFICATIONS:washing_status"
+  output_stream: "IMAGE_GPU:cropped_image"
 }
 
-# Converts GPU buffer to ImageFrame for processing tracking.
-node: {
-  calculator: "GpuBufferToImageFrameCalculator"
-  input_stream: "output_video"
-  output_stream: "output_video_cpu"
-
-}
+#node {
+#   calculator: "ScaleImageCalculator"
+#   input_stream: "output_video_cpu"
+#   output_stream: "output_video_downscaled"
+#   node_options {
+#     [type.googleapis.com/mediapipe.ScaleImageCalculatorOptions] {
+#       target_width: 320
+#       target_height: 240
+#       preserve_aspect_ratio: true
+#       output_format: SRGB
+#       algorithm: DEFAULT
+#     }
+#   }
+#}
 
 # Converts classification to drawing primitives for annotation overlay.
 node {
@@ -49,8 +57,8 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.LabelsToRenderDataCalculatorOptions]: {
       color { r: 255 g: 0 b: 0 }
-      thickness: 10.0
-      font_height_px: 50
+      thickness: 5.0
+      font_height_px: 30
       horizontal_offset_px: 30
       vertical_offset_px: 50
 
@@ -60,10 +68,34 @@ node {
   }
 }
 
+#node {
+#   calculator: "ImageCroppingCalculator"
+#   input_stream: "IMAGE_GPU:throttled_input_video"
+#   output_stream: "IMAGE_GPU:cropped_input_video"
+#   options: {
+#       [mediapipe.ImageCroppingCalculatorOptions.ext] {
+#           norm_width: 1.0
+#           norm_height: 0.75
+#           norm_center_x: 0.5
+#           norm_center_y: 0.5
+#           rotation: 1.5707963267948966
+#       }
+#   }
+#}
+
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE_GPU:throttled_input_video"
+#  input_stream: "IMAGE_GPU:cropped_input_video"
   input_stream: "washing_status_render_data"
   output_stream: "IMAGE_GPU:output_video"
+}
+
+# Converts GPU buffer to ImageFrame for processing tracking.
+node: {
+  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "output_video"
+  input_stream: "cropped_image"
+  output_stream: "output_video_cpu"
 }

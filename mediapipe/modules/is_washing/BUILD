@@ -19,6 +19,8 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
+
+        "//mediapipe/calculators/image:image_cropping_calculator",
     ],
 )
 

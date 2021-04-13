@@ -7,11 +7,39 @@ input_stream: "IMAGE_GPU:image"
 
 output_stream: "CLASSIFICATIONS:washing_status"
 
+output_stream: "IMAGE_GPU:cropped_image"
+
+node {
+   calculator: "ImageCroppingCalculator"
+   input_stream: "IMAGE_GPU:image"
+   output_stream: "IMAGE_GPU:cropped_image"
+   options: {
+       [mediapipe.ImageCroppingCalculatorOptions.ext] {
+            norm_width: 1.0
+            norm_height: 0.75
+
+#           norm_width: 1.0
+#           norm_height: 1.0
+
+#           norm_center_x: 1.0
+#           norm_center_y: 0.5
+
+#           width: 640
+#           height: 360
+
+#           width: 360
+#           height: 640
+
+#           rotation: 1.5707963267948966
+       }
+   }
+}
+
 # Transforms an image into a 320x240 tensor while keeping the aspect ratio, and
 # therefore may result in potential letterboxing.
 node {
   calculator: "ImageToTensorCalculator"
-  input_stream: "IMAGE_GPU:image"
+  input_stream: "IMAGE_GPU:cropped_image"
   output_stream: "TENSORS:input_tensor"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {

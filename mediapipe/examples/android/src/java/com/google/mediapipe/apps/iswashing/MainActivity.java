@@ -27,6 +27,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.CameraXPreviewHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
@@ -38,6 +39,7 @@ import com.google.mediapipe.components.TextureFrameConsumer;
 import com.google.mediapipe.glutil.EglManager;
 
 import com.google.mediapipe.framework.AndroidPacketCreator;
+import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
@@ -46,10 +48,34 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import android.os.Environment;
+
 import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
+import java.nio.channels.Channels;
+// import android.graphics.Bitmap;
+// import android.graphics.Bitmap.Config;
+
+//import com.google.mediapipe.apps.iswashing.TaskListener;
+
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import java.util.concurrent.locks.ReentrantLock;
+
 
 /** Main activity of MediaPipe basic app. */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TaskListener {
   private static final String TAG = "MainActivity";
 
   // Flips the camera-preview frames vertically by default, before sending them into FrameProcessor
@@ -82,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
+  private static final String SERVER_URL_STRING = "http://10.13.137.128:5000/camera.png";
+
   // Sends camera-preview frames into a MediaPipe graph for processing, and displays the processed
   // frames onto a {@link Surface}.
   protected FrameProcessor processor;
@@ -104,7 +132,37 @@ public class MainActivity extends AppCompatActivity {
 
   // private final int W = 720;
   // private final int H = 1280;
-    
+
+  // there is no method to query the number of channels exported to Java, so just assume 4
+  private final int IMAGE_NUM_CHANNELS = 4;
+
+  ByteBuffer buffer;
+
+  // class CallbackTask implements Runnable {
+  //   private final Runnable task;
+
+  //   private final MainActivity callback;
+
+  //   CallbackTask(Runnable task, MainActivity callback) {
+  //     this.task = task;
+  //     this.callback = callback;
+  //   }
+
+  //   public void run() {
+  //     task.run();
+  //     callback.onUploadFinished();
+  //   }
+
+  //   public void start() {
+  //     task.start();
+  //   }
+  // }
+
+    Thread uploadThread;
+  // CallbackTask uploadThread;
+  //   ReentrantLock lock = new ReentrantLock();
+  // Bitmap bitmap;
+
   // private int framebuffer = 0;
 
 //   class MyTextureFrameConsumer implements TextureFrameConsumer {
@@ -118,7 +176,61 @@ public class MainActivity extends AppCompatActivity {
 //       }
 //   }
 
+    public class NotificationThread implements Runnable{
+        ByteBuffer buffer;
+	/**
+	 * An abstract function that children must implement. This function is where 
+	 * all work - typically placed in the run of runnable - should be placed. 
+	 */
+///	public abstract void doWork();
 
+	/**
+	 * Our list of listeners to be notified upon thread completion.
+	 */
+	private List<TaskListener> listeners = Collections.synchronizedList(new ArrayList<TaskListener>() );
+
+        public NotificationThread(ByteBuffer buffer) {
+            this.buffer = buffer;
+        }
+
+	/**
+	 * Adds a listener to this object. 
+	 * @param listener Adds a new listener to this object. 
+	 */
+	public void addListener( TaskListener listener ){
+		listeners.add(listener);
+	}
+
+	/**
+	 * Removes a particular listener from this object, or does nothing if the listener
+	 * is not registered. 
+	 * @param listener The listener to remove. 
+	 */
+	public void removeListener( TaskListener listener ){
+		listeners.remove(listener);
+	}
+
+	/**
+	 * Notifies all listeners that the thread has completed.
+	 */
+	private final void notifyListeners() {
+		synchronized ( listeners ){
+			for (TaskListener listener : listeners) {
+			  listener.threadComplete(this);
+			}
+		}
+	}
+
+	/**
+	 * Implementation of the Runnable interface. This function first calls doRun(), then
+	 * notifies all listeners of completion.
+	 */
+	public void run() {
+//            doWork();
+            uploadFile(buffer);
+            notifyListeners();
+	}
+    }
 
   // class MyFrameProcessor extends FrameProcessor {
   //     public MyFrameProcessor(
@@ -153,11 +265,20 @@ public class MainActivity extends AppCompatActivity {
         return s;
     }
 
+    private boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(getContentViewLayoutResId());
+
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     try {
       applicationInfo =
@@ -219,18 +340,222 @@ public class MainActivity extends AppCompatActivity {
           });
     */
 
-//    nativeGetImageData
     processor.addPacketCallback(
             OUTPUT_IMAGE_FRAMES,
             (packet) -> {
+                synchronized ( this ){
+                    if (uploadThread != null) {
+                        /* already uploading */
+                        return;
+                    }
+                }
+
                 int w = PacketGetter.getImageWidth(packet);
                 int h = PacketGetter.getImageHeight(packet);
-                ByteBuffer bb = new ByteBuffer();
-                PacketGetter.getImageData(packet, bb);
-
                 Log.e(TAG, "lolcat: got image frame w=" + w + " h=" + h);
+
+                int bbSize = w * h * IMAGE_NUM_CHANNELS;
+
+                // allocate sufficiently large image buffer for the frame
+                if (buffer == null || buffer.capacity() != bbSize) {
+                    buffer = ByteBuffer.allocateDirect(bbSize);
+                    // bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                }
+
+                if (PacketGetter.getImageData(packet, buffer)) {
+                    //Log.e(TAG, "lolcat: saved the image to buffer: " + buffer.toString() + " buffer.array().length=" + buffer.array().length);
+
+                    NotificationThread nt = new NotificationThread(buffer);
+                    nt.addListener(this);
+                    synchronized ( this ){
+                        uploadThread = new Thread(nt);
+                    }
+                    uploadThread.start();
+
+                    // byte[] arr = buffer.array();
+                    // for (int i = 0; i < 5; i++) {
+                    //     int pos = i * 4;
+                    //     byte r = arr[pos + 0];
+                    //     byte g = arr[pos + 1];
+                    //     byte b = arr[pos + 2];
+                    //     byte a = arr[pos + 3];
+                    //     Log.e(TAG, "lolcat: i=" + i + " r,g,b,a=" + r + "," + g + "," + b + "," + a);
+
+                    // }
+                    // if (isExternalStorageWritable()) {
+                    //     try {
+                    //         File path = new File(this.getExternalFilesDir(
+                    //                         Environment.DIRECTORY_PICTURES), "iswashing");
+                    //         if (!path.exists() && !path.mkdirs()) {
+                    //             Log.e(TAG, "lolcat: Directory not created");
+                    //         } else {
+                    //             File file = new File(path, "camera-image.rgb");
+                    //             if (file.exists()) {
+                    //                 Log.e(TAG, "lolcat: already exists");
+                    //             } else {
+                    //                 FileOutputStream stream = new FileOutputStream(file);
+                    //                 try {
+                    //                     stream.getChannel().write(buffer);
+                    //                 } finally {
+                    //                     stream.close();
+                    //                 }
+                    //                 Log.e(TAG, "lolcat: saved to file: " + file.toString() + " bytes=" + buffer.array().length);
+                    //             }
+                    //         }
+                    //     } catch (IOException ex) {
+                    //         Log.e(TAG, "lolcat: io exception: " + ex);
+                    //     }
+                    // } else {
+                    //     Log.e(TAG, "lolcat: ext storage not writable");
+                    // }
+
+                    // StringBuilder sb = new StringBuilder();
+                    // for (byte b : arr) {
+                    //     sb.append(String.format("%02X", b));
+                    // }
+                    // for (int i = 0; i < w / 4; ++i) {
+                    //     String s = "";
+                    //     for (int j = 0; j < 4 * h * IMAGE_NUM_CHANNELS; ++j) {
+                    //         int pos = i * 4 * h * IMAGE_NUM_CHANNELS + j;
+                    //         if (pos % 4 != 3) {
+                    //             s += " " + arr[pos];
+                    //         }
+                    //     }
+                    //     Log.e(TAG, "lolcat: row[" + i + "]=" + s);
+                    // }
+                    //Log.e(TAG, "lolcat: s=" + sb.toString());
+
+                    //bitmap.copyPixelsFromBuffer(buffer);
+                    //Log.e(TAG, "lolcat: bitmap copied: " + bitmap.getPixel(0, 0));
+
+                } else {
+                    Log.e(TAG, "lolcat: failed to save the image in a buffer");
+                }
+
+//                Bitmap b = AndroidPacketGetter.getBitmapFromRgba(packet);
+//                Log.e(TAG, "lolcat: got bitmap w=" + b.getWidth() + " h=" + b.getHeight());
             });
   }
+
+    public void uploadFile(ByteBuffer buffer) {
+//        String fileName = sourceFileUri;
+
+        Log.e(TAG, "lolcat: uploading file " + buffer.toString());
+  
+        HttpURLConnection conn = null;
+        DataOutputStream dos = null;  
+        final String lineEnd = "\r\n";
+        final String hyphens = "--";
+        final String boundary = "********";
+//        int bytesRead, bytesAvailable, bufferSize;
+//        byte[] buffer;
+//        int maxBufferSize = 1 * 1024 * 1024; 
+//        File sourceFile = new File(sourceFileUri);
+
+        try { 
+            // open a URL connection to the Servlet
+            //FileInputStream fileInputStream = new FileInputStream(sourceFile);
+            //URL url = new URL(upLoadServerUri);
+
+            URL serverUrl = new URL(SERVER_URL_STRING);
+                    
+            // Open a HTTP  connection to  the URL
+            conn = (HttpURLConnection) serverUrl.openConnection(); 
+            conn.setDoInput(true); // Allow Inputs
+            conn.setDoOutput(true); // Allow Outputs
+            conn.setUseCaches(false); // Don't use a Cached Copy
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("User-Agent", "Handwash App");
+//            conn.setRequestProperty("Connection", "Keep-Alive");
+//            conn.setRequestProperty("ENCTYPE", "multipart/form-data");
+            conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+//            conn.setRequestProperty("uploaded_file", fileName);
+
+            Log.e(TAG, "lolcat: connection opened");
+
+            dos = new DataOutputStream(conn.getOutputStream());
+            dos.writeBytes(hyphens + boundary + lineEnd); 
+            dos.writeBytes("Content-Disposition: form-data; name=\"image\";filename=\"camera-image.rbga\"" + lineEnd);
+            dos.writeBytes(lineEnd);
+
+            // create a buffer of  maximum size
+            // bytesAvailable = fileInputStream.available(); 
+            // bufferSize = Math.min(bytesAvailable, maxBufferSize);
+            // buffer = new byte[bufferSize];
+
+                   // // read file and write it into form...
+                   // bytesRead = fileInputStream.read(buffer, 0, bufferSize);  
+
+                   // while (bytesRead > 0) {
+
+                   //   dos.write(buffer, 0, bufferSize);
+                   //   bytesAvailable = fileInputStream.available();
+                   //   bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                   //   bytesRead = fileInputStream.read(buffer, 0, bufferSize);   
+
+                   //  }
+
+//            dos.getChannel().write(buffer);
+//            WritableByteChannel channel = Channels.newChannel(dos);
+//            WritableByteChannel channel = dos.getChannel();
+//            channel.write(buffer);
+//            channel.flush();
+//            dos.flush();
+            //dos.write(buffer, 0, bufferSize);
+
+//            byte[] arr = buffer.array();
+//            dos.write(arr, 0, buffer.remaining());
+            buffer.rewind();
+            byte[] arr = new byte[buffer.remaining()];
+            buffer.get(arr);
+            dos.write(arr, 0, arr.length);
+
+            // byte[] bytesArray = new byte[buffer.remaining()];
+            // buffer.get(bytesArray, 0, bytesArray.length);
+            // dos.write(bytesArray, 0, bytesArray.length);
+
+            Log.e(TAG, "lolcat: buffer written, len=" + arr.length);
+
+            // send multipart form data necesssary after file data...
+            dos.writeBytes(lineEnd);
+            dos.writeBytes(hyphens + boundary + hyphens + lineEnd);
+
+            Log.e(TAG, "lolcat: wait for reply");
+
+            // Responses from the server (code and message)
+            int serverResponseCode = conn.getResponseCode();
+            String serverResponseMessage = conn.getResponseMessage();
+
+            Log.e(TAG, "lolcat: HTTP Response is " + serverResponseMessage + ": " + serverResponseCode);
+
+            if (serverResponseCode == 200){
+                // TODO: parse the responsse
+            }
+                    
+            //close the streams //
+            //fileInputStream.close();
+            dos.flush();
+            dos.close();
+                     
+        } catch (Exception e) {
+            e.printStackTrace();
+                   
+            Log.e(TAG, "lolcat: upload file to server failed, Exception: " + e.getMessage());
+        }
+    }
+
+    public void threadComplete( Runnable runner ) {
+        Log.e(TAG, "lolcat: setting upload thread to null");
+
+//        lock.lock();
+//         try {
+        synchronized(this) {
+            uploadThread = null;
+        }
+        // } finally {
+        //     lock.unlock();
+        // }
+    }
 
   // Used to obtain the content view for this application. If you are extending this class, and
   // have a custom layout, override this method and return the custom layout.
@@ -279,7 +604,9 @@ public class MainActivity extends AppCompatActivity {
   }
 
   protected Size cameraTargetResolution() {
-    return null; // No preference and let the camera (helper) decide.
+      // smaller sizes do not work: 640x360 appears to be the minimum always
+      // used if smaller resolution is specified
+      return new Size(640, 360);
   }
 
   public void startCamera() {
