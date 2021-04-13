@@ -24,8 +24,8 @@ android_binary(
     resource_files = glob(["res/**"]),
     assets = [
         "//mediapipe/graphs/is_washing:is_washing_mobile_gpu.binarypb",
-        "//mediapipe/modules/is_washing:is_washing.tflite",
-        "//mediapipe/modules/is_washing:washing_status.txt",
+        "//mediapipe/modules/hand_washing:is_washing.tflite",
+        "//mediapipe/modules/hand_washing:washing_status.txt",
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/iswashing:AndroidManifest.xml",

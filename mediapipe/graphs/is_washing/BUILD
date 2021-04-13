@@ -17,10 +17,9 @@ cc_library(
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:labels_to_render_data_calculator",
-#        "//mediapipe/calculators/image:scale_image_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
-        "//mediapipe/modules/is_washing:is_washing_gpu"
+        "//mediapipe/modules/hand_washing:is_washing_gpu"
     ],
 )
 
