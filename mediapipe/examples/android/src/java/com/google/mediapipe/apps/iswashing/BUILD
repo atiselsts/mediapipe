@@ -33,7 +33,7 @@ android_binary(
         "applicationId": "com.google.mediapipe.apps.iswashing",
         "appName": "Washing Detection",
         "mainActivity": "com.google.mediapipe.apps.iswashing.MainActivity",
-        "cameraFacingFront": "True",
+        "cameraFacingFront": "False",
         "binaryGraphName": "is_washing_mobile_gpu.binarypb",
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",

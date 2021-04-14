@@ -9,6 +9,8 @@ output_stream: "CLASSIFICATIONS:washing_status"
 
 output_stream: "IMAGE_GPU:cropped_image"
 
+#output_stream: "FLOATS:image_array"
+
 node {
    calculator: "ImageCroppingCalculator"
    input_stream: "IMAGE_GPU:image"
@@ -30,18 +32,26 @@ node {
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
-      output_tensor_width: 320
-      output_tensor_height: 240
+      output_tensor_width: 240
+      output_tensor_height: 320
       keep_aspect_ratio: true
       output_tensor_float_range {
-        min: -1.0
-        max: 1.0
+        min: 0
+        max: 255
       }
       border_mode: BORDER_ZERO
       gpu_origin: TOP_LEFT
     }
   }
 }
+
+# Converts the hand-flag tensor into a float that represents the confidence
+# score of hand presence.
+#node {
+#  calculator: "TensorsToFloatsCalculator"
+#  input_stream: "TENSORS:input_tensor"
+#  output_stream: "FLOATS:image_array"
+#}
 
 # Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
@@ -52,7 +62,7 @@ node {
   output_stream: "TENSORS:classification_tensor"
   options: {
     [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/is_washing/is_washing.tflite"
+      model_path: "mediapipe/modules/hand_washing/is_washing.tflite"
     }
   }
 }
@@ -66,7 +76,7 @@ node {
   options: {
     [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
       top_k: 1
-      label_map_path: "mediapipe/modules/is_washing/washing_status.txt"
+      label_map_path: "mediapipe/modules/hand_washing/washing_status.txt"
     }
   }
 }

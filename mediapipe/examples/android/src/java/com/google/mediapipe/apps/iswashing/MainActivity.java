@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
 
   private static final String OUTPUT_WASHING_STATUS = "washing_status";
   private static final String OUTPUT_IMAGE_FRAMES = "output_video_cpu";
+  private static final String OUTPUT_IMAGES = "image_array";
 
   static {
     // Load all native libraries needed by the app.
@@ -310,6 +311,17 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
 
     ProtoUtil.registerTypeName(ClassificationList.class, "mediapipe.ClassificationList");
     ProtoUtil.registerTypeName(Classification.class, "mediapipe.Classification");
+
+    if(false) {
+    processor.addPacketCallback(
+            OUTPUT_IMAGES,
+            (packet) -> {
+                Log.e(TAG, "lolcat: got output image");
+                float[] v = PacketGetter.getFloat32Vector(packet);
+                Log.e(TAG, "lolcat: v.length=" + v.length + " v[0]=" + v[0]);
+            }
+        );
+    }
 
     /*
     // print classifications on debug output

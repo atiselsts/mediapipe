@@ -130,60 +130,15 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
   // ApplicationInfo for retrieving metadata defined in the manifest.
   private ApplicationInfo applicationInfo;
 
-  // private final int W = 720;
-  // private final int H = 1280;
-
   // there is no method to query the number of channels exported to Java, so just assume 4
   private final int IMAGE_NUM_CHANNELS = 4;
 
   ByteBuffer buffer;
 
-  // class CallbackTask implements Runnable {
-  //   private final Runnable task;
-
-  //   private final MainActivity callback;
-
-  //   CallbackTask(Runnable task, MainActivity callback) {
-  //     this.task = task;
-  //     this.callback = callback;
-  //   }
-
-  //   public void run() {
-  //     task.run();
-  //     callback.onUploadFinished();
-  //   }
-
-  //   public void start() {
-  //     task.start();
-  //   }
-  // }
-
-    Thread uploadThread;
-  // CallbackTask uploadThread;
-  //   ReentrantLock lock = new ReentrantLock();
-  // Bitmap bitmap;
-
-  // private int framebuffer = 0;
-
-//   class MyTextureFrameConsumer implements TextureFrameConsumer {
-//       public void onNewFrame(TextureFrame frame) {
-//           Log.e(TAG, " lolcat: got new frame w=" + frame.getWidth() + " h="
-//                   + frame.getHeight() + " ts=" + frame.getTimestamp());
-
-// //          bindFramebuffer(frame.getTextureName(), W, H);
-          
-//           frame.release();
-//       }
-//   }
+  Thread uploadThread;
 
     public class NotificationThread implements Runnable{
         ByteBuffer buffer;
-	/**
-	 * An abstract function that children must implement. This function is where 
-	 * all work - typically placed in the run of runnable - should be placed. 
-	 */
-///	public abstract void doWork();
-
 	/**
 	 * Our list of listeners to be notified upon thread completion.
 	 */
@@ -226,31 +181,10 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
 	 * notifies all listeners of completion.
 	 */
 	public void run() {
-//            doWork();
             uploadFile(buffer);
             notifyListeners();
 	}
     }
-
-  // class MyFrameProcessor extends FrameProcessor {
-  //     public MyFrameProcessor(
-  //     Context context,
-  //     long parentNativeContext,
-  //     String graphName,
-  //     String inputStream,
-  //     String outputStream) {
-  //         super(context, parentNativeContext, graphName, inputStream, outputStream);
-  //     }
-
-  //     @Override
-  //     public void onNewFrame(TextureFrame frame) {
-  //         Log.e(TAG, " lolcat: got new frame w=" + frame.getWidth() + " h="
-  //                 + frame.getHeight() + " ts=" + frame.getTimestamp());
-
-  //         super.onNewFrame(frame);
-  //     }
-
-  // }
 
     private String getClassificationListDebugString(ClassificationList classifications) {
         String s = "Number of classifications: " + classifications.getClassificationList().size();
@@ -372,16 +306,6 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
                     }
                     uploadThread.start();
 
-                    // byte[] arr = buffer.array();
-                    // for (int i = 0; i < 5; i++) {
-                    //     int pos = i * 4;
-                    //     byte r = arr[pos + 0];
-                    //     byte g = arr[pos + 1];
-                    //     byte b = arr[pos + 2];
-                    //     byte a = arr[pos + 3];
-                    //     Log.e(TAG, "lolcat: i=" + i + " r,g,b,a=" + r + "," + g + "," + b + "," + a);
-
-                    // }
                     // if (isExternalStorageWritable()) {
                     //     try {
                     //         File path = new File(this.getExternalFilesDir(
@@ -431,14 +355,10 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
                 } else {
                     Log.e(TAG, "lolcat: failed to save the image in a buffer");
                 }
-
-//                Bitmap b = AndroidPacketGetter.getBitmapFromRgba(packet);
-//                Log.e(TAG, "lolcat: got bitmap w=" + b.getWidth() + " h=" + b.getHeight());
             });
   }
 
     public void uploadFile(ByteBuffer buffer) {
-//        String fileName = sourceFileUri;
 
         Log.e(TAG, "lolcat: uploading file " + buffer.toString());
   
@@ -447,10 +367,6 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
         final String lineEnd = "\r\n";
         final String hyphens = "--";
         final String boundary = "********";
-//        int bytesRead, bytesAvailable, bufferSize;
-//        byte[] buffer;
-//        int maxBufferSize = 1 * 1024 * 1024; 
-//        File sourceFile = new File(sourceFileUri);
 
         try { 
             // open a URL connection to the Servlet

@@ -25,13 +25,15 @@ android_binary(
     assets = [
         "//mediapipe/graphs/washing_movements:washing_movements_mobile_gpu.binarypb",
         "//mediapipe/modules/hand_washing:washing_movements.tflite",
+        "//mediapipe/modules/hand_washing:is_washing.tflite",
         "//mediapipe/modules/hand_washing:washing_status.txt",
+        "//mediapipe/modules/hand_washing:washing_movements.txt",
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/washingmovements:AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.washingmovements",
-        "appName": "Washing Detection",
+        "appName": "Washing Movements",
         "mainActivity": "com.google.mediapipe.apps.washingmovements.MainActivity",
         "cameraFacingFront": "True",
         "binaryGraphName": "washing_movements_mobile_gpu.binarypb",

@@ -32,6 +32,7 @@ node {
   input_stream: "IMAGE_GPU:throttled_input_video"
   output_stream: "CLASSIFICATIONS:washing_status"
   output_stream: "IMAGE_GPU:cropped_image"
+#  output_stream: "FLOATS:image_array"
 }
 
 # Converts classification to drawing primitives for annotation overlay.

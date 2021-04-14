@@ -39,7 +39,7 @@ mediapipe_simple_subgraph(
 
 exports_files([
         "is_washing.tflite",
-        "washing_movements.tflite",
         "washing_status.txt",
+        "washing_movements.tflite",
         "washing_movements.txt",
 ])
