@@ -34,6 +34,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
 
         "//mediapipe/calculators/image:image_cropping_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
     ],
 )
 
