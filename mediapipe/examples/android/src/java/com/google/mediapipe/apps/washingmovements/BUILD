@@ -25,8 +25,6 @@ android_binary(
     assets = [
         "//mediapipe/graphs/washing_movements:washing_movements_mobile_gpu.binarypb",
         "//mediapipe/modules/hand_washing:washing_movements.tflite",
-        "//mediapipe/modules/hand_washing:is_washing.tflite",
-        "//mediapipe/modules/hand_washing:washing_status.txt",
         "//mediapipe/modules/hand_washing:washing_movements.txt",
     ],
     assets_dir = "",

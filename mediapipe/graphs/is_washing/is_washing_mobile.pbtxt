@@ -31,8 +31,7 @@ node {
   calculator: "IsWashingGpu"
   input_stream: "IMAGE_GPU:throttled_input_video"
   output_stream: "CLASSIFICATIONS:washing_status"
-  output_stream: "IMAGE_GPU:cropped_image"
-#  output_stream: "FLOATS:image_array"
+  output_stream: "IMAGE_GPU:rotated_image"
 }
 
 # Converts classification to drawing primitives for annotation overlay.
@@ -43,10 +42,10 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.LabelsToRenderDataCalculatorOptions]: {
       color { r: 255 g: 0 b: 0 }
-      thickness: 5.0
-      font_height_px: 30
+      thickness: 4.0
+      font_height_px: 25
       horizontal_offset_px: 30
-      vertical_offset_px: 50
+      vertical_offset_px: 30
 
       max_num_labels: 1
       location: TOP_LEFT
@@ -62,9 +61,17 @@ node {
   output_stream: "IMAGE_GPU:output_video"
 }
 
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE_GPU:rotated_image"
+  input_stream: "washing_status_render_data"
+  output_stream: "IMAGE_GPU:rotated_image_with_labels"
+}
+
 # Converts GPU buffer to ImageFrame for processing tracking.
 node: {
   calculator: "GpuBufferToImageFrameCalculator"
-  input_stream: "cropped_image"
+  input_stream: "rotated_image_with_labels"
   output_stream: "output_video_cpu"
 }

@@ -47,7 +47,7 @@ node {
       horizontal_offset_px: 30
       vertical_offset_px: 30
 
-      max_num_labels: 1
+      max_num_labels: 3
       location: TOP_LEFT
     }
   }

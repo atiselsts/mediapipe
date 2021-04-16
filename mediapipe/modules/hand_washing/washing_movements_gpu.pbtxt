@@ -79,7 +79,7 @@ node {
   output_stream: "CLASSIFICATIONS:washing_movement"
   options: {
     [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
-      top_k: 1
+      top_k: 3
       label_map_path: "mediapipe/modules/hand_washing/washing_movements.txt"
     }
   }

@@ -18,7 +18,6 @@ cc_library(
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:labels_to_render_data_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
-#        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
         "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
         "//mediapipe/modules/hand_washing:is_washing_gpu"
     ],
