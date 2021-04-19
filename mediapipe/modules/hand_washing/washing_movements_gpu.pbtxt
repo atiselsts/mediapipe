@@ -68,19 +68,10 @@ node: {
   }
 }
 
-# Converts ImageFrame to GPU buffer
-#node: {
-#  calculator: "ImageFrameToGpuBufferCalculator"
-#  input_stream: "composite_image_cpu"
-#  output_stream: "composite_image"
-#}
-
-# Transforms an image into a 320x240 tensor while keeping the aspect ratio, and
+# Transforms an image into a 320x(240x5) tensor while keeping the aspect ratio, and
 # therefore may result in potential letterboxing.
 node {
   calculator: "ImageToTensorCalculator"
-#  input_stream: "IMAGE_GPU:rotated_image"
-#  output_stream: "TENSORS:input_tensor"
 
   input_stream: "IMAGE:composite_image_cpu"
   output_stream: "TENSORS:input_tensor"

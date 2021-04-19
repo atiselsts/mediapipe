@@ -81,14 +81,10 @@ absl::Status ImageMergeCalculator::RenderCpu(CalculatorContext* cc) {
       last_timestamp = cc->InputTimestamp().Seconds();
   }
 
-  // cv::Mat merged_mat; // XXX: could get rid of this???
-  // cv::vconcat(cache, num_frames_, merged_mat);
-
   std::unique_ptr<ImageFrame> output_frame(new ImageFrame(
                   input_img.Format(), input_img.Width(), input_img.Height() * num_frames_));
   
   cv::Mat output_mat = formats::MatView(output_frame.get());
-//  merged_mat.copyTo(output_mat);
 
   cv::vconcat(cache, num_frames_, output_mat);
 
