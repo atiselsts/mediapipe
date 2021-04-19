@@ -130,6 +130,13 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 
+  for (int i = 0; i < input_tensors.size(); ++i) {
+      LOG(ERROR) << "lolcat: passed input " <<  i << " shape=";
+      std::for_each(input_tensors[i].shape().dims.begin(), input_tensors[i].shape().dims.end(), [](int j) {
+          LOG(ERROR) << "lolcat: " <<  j << " x ";
+      });
+  }
+
   if (use_advanced_gpu_api_) {
     MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
         [this, &input_tensors, &output_tensors]() -> ::mediapipe::Status {
@@ -327,6 +334,9 @@ absl::Status InferenceCalculatorGlImpl::LoadDelegate(CalculatorContext* cc) {
 
   // Get input image sizes.
   const auto& input_indices = interpreter_->inputs();
+
+  LOG(ERROR) << "lolcat: num inputs: " << input_indices.size();
+
   for (int i = 0; i < input_indices.size(); ++i) {
     const TfLiteTensor* tensor = interpreter_->tensor(input_indices[i]);
     gpu_buffers_in_.emplace_back(absl::make_unique<Tensor>(
@@ -338,6 +348,13 @@ absl::Status InferenceCalculatorGlImpl::LoadDelegate(CalculatorContext* cc) {
                      gpu_buffers_in_.back()->GetOpenGlBufferWriteView().name(),
                      interpreter_->inputs()[i]),
                  kTfLiteOk);
+
+    LOG(ERROR) << "lolcat: input " << i << " shape=";
+    std::vector<int> v = std::vector<int>{
+        tensor->dims->data, tensor->dims->data + tensor->dims->size};
+    std::for_each(v.begin(), v.end(), [](int j) {
+        LOG(ERROR) << "lolcat: " <<  j << " x ";
+    });
   }
   interpreter_->SetAllowBufferHandleOutput(true);
   // Get output image sizes.

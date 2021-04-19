@@ -36,9 +36,9 @@ class InferenceCalculatorSelectorImpl
         Subgraph::GetOptions<::mediapipe::InferenceCalculatorOptions>(
             subgraph_node);
     std::vector<absl::string_view> impls;
-    const bool should_use_gpu =
-        !options.has_delegate() ||  // Use GPU delegate if not specified
-        (options.has_delegate() && options.delegate().has_gpu());
+    const bool should_use_gpu = false;
+        // !options.has_delegate() ||  // Use GPU delegate if not specified
+        // (options.has_delegate() && options.delegate().has_gpu());
     if (should_use_gpu) {
       impls.emplace_back("Metal");
       impls.emplace_back("MlDriftWebGl");

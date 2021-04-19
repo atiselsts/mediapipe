@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message ImageMergeCalculatorOptions {
+  extend CalculatorOptions {
+    optional ImageMergeCalculatorOptions ext = 123456780;
+  }
+
+  // number of frames to merge
+  optional int32 num_frames = 1;
+
+  // TODO: add an option for selecting whether to merge horizontally or vertically!
+}

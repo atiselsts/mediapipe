@@ -9,6 +9,8 @@ output_stream: "CLASSIFICATIONS:washing_movement"
 
 output_stream: "IMAGE_GPU:rotated_image"
 
+output_stream: "IMAGE:composite_image_cpu"
+
 node {
    calculator: "ImageCroppingCalculator"
    input_stream: "IMAGE_GPU:image"
@@ -34,18 +36,61 @@ node {
   }
 }
 
+node {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE_GPU:rotated_image"
+  output_stream: "IMAGE_GPU:scaled_image"
+  options: {
+    [mediapipe.ImageTransformationCalculatorOptions.ext] {
+      output_width: 320
+      output_height: 240
+    }
+  }
+}
+
+
+# Converts GPU buffer to ImageFrame for processing
+node: {
+  calculator: "GpuBufferToImageFrameCalculator"
+  input_stream: "scaled_image"
+  output_stream: "scaled_image_cpu"
+}
+
+# Merges the input image
+node: {
+  calculator: "ImageMergeCalculator"
+  input_stream: "IMAGE:scaled_image_cpu"
+  output_stream: "IMAGE:composite_image_cpu"
+  options: {
+    [mediapipe.ImageMergeCalculatorOptions.ext] {
+      num_frames: 5
+    }
+  }
+}
+
+# Converts ImageFrame to GPU buffer
+#node: {
+#  calculator: "ImageFrameToGpuBufferCalculator"
+#  input_stream: "composite_image_cpu"
+#  output_stream: "composite_image"
+#}
+
 # Transforms an image into a 320x240 tensor while keeping the aspect ratio, and
 # therefore may result in potential letterboxing.
 node {
   calculator: "ImageToTensorCalculator"
-  input_stream: "IMAGE_GPU:rotated_image"
+#  input_stream: "IMAGE_GPU:rotated_image"
+#  output_stream: "TENSORS:input_tensor"
+
+  input_stream: "IMAGE:composite_image_cpu"
   output_stream: "TENSORS:input_tensor"
+
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
       output_tensor_width: 320
-      output_tensor_height: 240
-      keep_aspect_ratio: true
+      output_tensor_height: 1200
+      keep_aspect_ratio: false
       output_tensor_float_range {
         min: 0
         max: 255

@@ -206,6 +206,9 @@ class ImageToTensorCalculator : public Node {
     ASSIGN_OR_RETURN(auto image, GetInputImage(cc));
     const Size size{image->width(), image->height()};
     RotatedRect roi = GetRoi(size.width, size.height, norm_rect);
+
+    LOG(ERROR) << "lolcat: img to tensor, dims=" << size.width << "x" << size.height;
+
     ASSIGN_OR_RETURN(auto padding, PadRoi(options_.output_tensor_width(),
                                           options_.output_tensor_height(),
                                           options_.keep_aspect_ratio(), &roi));

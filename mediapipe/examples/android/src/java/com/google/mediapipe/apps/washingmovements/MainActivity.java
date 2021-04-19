@@ -97,6 +97,8 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
   private static final String OUTPUT_WASHING_STATUS = "washing_status";
   private static final String OUTPUT_IMAGE_FRAMES = "output_video_cpu";
 
+  private static final String OUTPUT_IMAGE_COMPOSITE = "composite_image_cpu";
+
   static {
     // Load all native libraries needed by the app.
     System.loadLibrary("mediapipe_jni");
@@ -133,7 +135,10 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
   // there is no method to query the number of channels exported to Java, so just assume 4
   private final int IMAGE_NUM_CHANNELS = 4;
 
+  int numPackets = 0;
+
   ByteBuffer buffer;
+  ByteBuffer buffer2;
 
   Thread uploadThread;
 
@@ -273,6 +278,55 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
             }
           });
     */
+
+    // composite image, for debugging
+    processor.addPacketCallback(
+            OUTPUT_IMAGE_COMPOSITE,
+            (packet) -> {
+                numPackets += 1;
+                if (numPackets != 20) {
+                    return;
+                }
+                if (isExternalStorageWritable()) {
+                    try {
+                        File path = new File(this.getExternalFilesDir(
+                                        Environment.DIRECTORY_PICTURES), "iswashing");
+                        if (!path.exists() && !path.mkdirs()) {
+                            Log.e(TAG, "lolcat: Directory not created");
+                        } else {
+                            File file = new File(path, "composite-image.rgb");
+                            if (false && file.exists()) {
+                                Log.e(TAG, "lolcat: already exists");
+                            } else {
+                                FileOutputStream stream = new FileOutputStream(file);
+
+                                int w = PacketGetter.getImageWidth(packet);
+                                int h = PacketGetter.getImageHeight(packet);
+                                Log.e(TAG, "lolcat: got composite image frame w=" + w + " h=" + h);
+                                int bbSize = w * h * IMAGE_NUM_CHANNELS;
+
+                                // allocate sufficiently large image buffer for the frame
+                                if (buffer2 == null || buffer2.capacity() != bbSize) {
+                                    buffer2 = ByteBuffer.allocateDirect(bbSize);
+                                }
+
+                                if (PacketGetter.getImageData(packet, buffer2)) {
+                                    try {
+                                        stream.getChannel().write(buffer2);
+                                    } finally {
+                                        stream.close();
+                                    }
+                                    Log.e(TAG, "lolcat: saved to file: " + file.toString());
+                                }
+                            }
+                        }
+                    } catch (IOException ex) {
+                        Log.e(TAG, "lolcat: io exception: " + ex);
+                    }
+                } else {
+                    Log.e(TAG, "lolcat: ext storage not writable");
+                }
+            });
 
     processor.addPacketCallback(
             OUTPUT_IMAGE_FRAMES,

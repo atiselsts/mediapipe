@@ -60,6 +60,16 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "image_merge_calculator_proto",
+    srcs = ["image_merge_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "bilateral_filter_calculator_proto",
     srcs = ["bilateral_filter_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -305,6 +315,38 @@ cc_test(
         "//mediapipe/framework/tool:tag_map_helper",
     ],
 )
+
+cc_library(
+    name = "image_merge_calculator",
+    srcs = ["image_merge_calculator.cc"],
+    hdrs = ["image_merge_calculator.h"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+        ],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "//mediapipe:apple": [
+            "-framework CoreVideo",
+            "-framework MetalKit",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":image_merge_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
 
 cc_library(
     name = "luminance_calculator",
