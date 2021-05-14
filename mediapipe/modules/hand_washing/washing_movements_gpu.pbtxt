@@ -7,9 +7,10 @@ input_stream: "IMAGE_GPU:image"
 
 output_stream: "CLASSIFICATIONS:washing_movement"
 
-output_stream: "IMAGE_GPU:rotated_image"
+#output_stream: "IMAGE_GPU:rotated_image"
+output_stream: "IMAGE_GPU:scaled_image"
 
-output_stream: "IMAGE:composite_image_cpu"
+#output_stream: "IMAGE:composite_image_cpu"
 
 node {
    calculator: "ImageCroppingCalculator"
@@ -48,40 +49,53 @@ node {
   }
 }
 
+#node {
+#  calculator: "ImageTransformationCalculator"
+#  input_stream: "IMAGE_GPU:rotated_image"
+#  output_stream: "IMAGE_GPU:scaled_image_small"
+#  options: {
+#    [mediapipe.ImageTransformationCalculatorOptions.ext] {
+#      output_width: 160
+#      output_height: 120
+#    }
+#  }
+#}
+
 
 # Converts GPU buffer to ImageFrame for processing
-node: {
-  calculator: "GpuBufferToImageFrameCalculator"
-  input_stream: "scaled_image"
-  output_stream: "scaled_image_cpu"
-}
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "scaled_image"
+#  output_stream: "scaled_image_cpu"
+#}
 
 # Merges the input image
-node: {
-  calculator: "ImageMergeCalculator"
-  input_stream: "IMAGE:scaled_image_cpu"
-  output_stream: "IMAGE:composite_image_cpu"
-  options: {
-    [mediapipe.ImageMergeCalculatorOptions.ext] {
-      num_frames: 5
-    }
-  }
-}
+#node: {
+#  calculator: "ImageMergeCalculator"
+#  input_stream: "IMAGE:scaled_image_cpu"
+#  output_stream: "IMAGE:composite_image_cpu"
+#  options: {
+#    [mediapipe.ImageMergeCalculatorOptions.ext] {
+#      num_frames: 5
+#    }
+#  }
+#}
 
 # Transforms an image into a 320x(240x5) tensor while keeping the aspect ratio, and
 # therefore may result in potential letterboxing.
 node {
   calculator: "ImageToTensorCalculator"
 
-  input_stream: "IMAGE:composite_image_cpu"
+#  input_stream: "IMAGE:composite_image_cpu"
+  input_stream: "IMAGE_GPU:scaled_image"
   output_stream: "TENSORS:input_tensor"
 
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   options: {
     [mediapipe.ImageToTensorCalculatorOptions.ext] {
       output_tensor_width: 320
-      output_tensor_height: 1200
-      keep_aspect_ratio: false
+      output_tensor_height: 240
+      keep_aspect_ratio: true
       output_tensor_float_range {
         min: 0
         max: 255
@@ -91,6 +105,132 @@ node {
     }
   }
 }
+
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "scaled_image"
+#  output_stream: "scaled_image_cpu1"
+#}
+
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "scaled_image"
+#  output_stream: "scaled_image_cpu2"
+#}
+
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "scaled_image"
+#  output_stream: "scaled_image_cpu3"
+#}
+
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "scaled_image"
+#  output_stream: "scaled_image_cpu4"
+#}
+
+#node: {
+#  calculator: "GpuBufferToImageFrameCalculator"
+#  input_stream: "scaled_image"
+#  output_stream: "scaled_image_cpu5"
+#}
+
+
+#node {
+#  calculator: "ImageToTensorCalculator"
+#  input_stream: "IMAGE:scaled_image_cpu1"
+#  output_stream: "TENSORS:input_tensor1"
+#  options: {
+#    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+#      output_tensor_width: 320
+#      output_tensor_height: 240
+#      keep_aspect_ratio: true
+#      output_tensor_float_range {
+#        min: 0
+#        max: 255
+#      }
+#      border_mode: BORDER_ZERO
+#      gpu_origin: TOP_LEFT
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ImageToTensorCalculator"
+#  input_stream: "IMAGE:scaled_image_cpu2"
+#  output_stream: "TENSORS:input_tensor2"
+#  options: {
+#    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+#      output_tensor_width: 320
+#      output_tensor_height: 240
+#      keep_aspect_ratio: true
+#      output_tensor_float_range {
+#        min: 0
+#        max: 255
+#      }
+#      border_mode: BORDER_ZERO
+#      gpu_origin: TOP_LEFT
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ImageToTensorCalculator"
+#  input_stream: "IMAGE:scaled_image_cpu3"
+#  output_stream: "TENSORS:input_tensor3"
+#  options: {
+#    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+#      output_tensor_width: 320
+#      output_tensor_height: 240
+#      keep_aspect_ratio: true
+#      output_tensor_float_range {
+#        min: 0
+#        max: 255
+#      }
+#      border_mode: BORDER_ZERO
+#      gpu_origin: TOP_LEFT
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ImageToTensorCalculator"
+#  input_stream: "IMAGE:scaled_image_cpu4"
+#  output_stream: "TENSORS:input_tensor4"
+#  options: {
+#    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+#      output_tensor_width: 320
+#      output_tensor_height: 240
+#      keep_aspect_ratio: true
+#      output_tensor_float_range {
+#        min: 0
+#        max: 255
+#      }
+#      border_mode: BORDER_ZERO
+#      gpu_origin: TOP_LEFT
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ImageToTensorCalculator"
+#  input_stream: "IMAGE:scaled_image_cpu5"
+#  output_stream: "TENSORS:input_tensor5"
+#  options: {
+#    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+#      output_tensor_width: 320
+#      output_tensor_height: 240
+#      keep_aspect_ratio: true
+#      output_tensor_float_range {
+#        min: 0
+#        max: 255
+#      }
+#      border_mode: BORDER_ZERO
+#      gpu_origin: TOP_LEFT
+#    }
+#  }
+#}
 
 
 # Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a

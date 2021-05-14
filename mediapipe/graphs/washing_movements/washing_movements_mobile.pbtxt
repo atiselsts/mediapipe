@@ -5,9 +5,10 @@ input_stream: "input_video"
 # GPU image. (GpuBuffer)
 output_stream: "output_video"
 
-output_stream: "output_video_cpu"
-
-output_stream: "composite_image_cpu"
+#output_stream: "composite_image_cpu"
+#output_stream: "output_video_cpu"
+#output_stream: "shifted_output_video_cpu"
+output_stream: "flow_frames"
 
 
 # Throttles the images flowing downstream for flow control. It passes through
@@ -36,8 +37,9 @@ node {
   calculator: "WashingMovementsGpu"
   input_stream: "IMAGE_GPU:throttled_input_video"
   output_stream: "CLASSIFICATIONS:washing_movement"
-  output_stream: "IMAGE_GPU:rotated_image"
-  output_stream: "IMAGE:composite_image_cpu"
+#  output_stream: "IMAGE_GPU:rotated_image"
+  output_stream: "IMAGE_GPU:scaled_image"
+#  output_stream: "IMAGE:composite_image_cpu"
 }
 
 # Converts classification to drawing primitives for annotation overlay.
@@ -71,7 +73,8 @@ node {
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE_GPU:rotated_image"
+#  input_stream: "IMAGE_GPU:rotated_image"
+  input_stream: "IMAGE_GPU:scaled_image"
   input_stream: "washing_movement_render_data"
   output_stream: "IMAGE_GPU:rotated_image_with_labels"
 }
@@ -82,4 +85,54 @@ node: {
   calculator: "GpuBufferToImageFrameCalculator"
   input_stream: "rotated_image_with_labels"
   output_stream: "output_video_cpu"
+}
+
+
+
+# Shift the the timestamps of packets along a stream.
+# With a packet_offset of -1, the first packet will be dropped, the second will
+# be output with the timestamp of the first, the third with the timestamp of
+# the second, and so on.
+node: {
+  calculator: "SequenceShiftCalculator"
+  input_stream: "output_video_cpu"
+  output_stream: "shifted_output_video_cpu"
+  node_options: {
+    [type.googleapis.com/mediapipe.SequenceShiftCalculatorOptions]: {
+      packet_offset: -1
+    }
+  }
+}
+
+# Join the original input stream and the one that is shifted by one packet.
+node: {
+  calculator: "PacketInnerJoinCalculator"
+  input_stream: "output_video_cpu"
+  input_stream: "shifted_output_video_cpu"
+  output_stream: "first_frames"
+  output_stream: "second_frames"
+}
+
+# Compute the forward optical flow.
+node {
+  calculator: "Tvl1OpticalFlowCalculator"
+  input_stream: "FIRST_FRAME:first_frames"
+  input_stream: "SECOND_FRAME:second_frames"
+  output_stream: "FORWARD_FLOW:forward_flow"
+  max_in_flight: 2
+}
+
+
+# Convert an optical flow to be an image frame with 2 channels (v_x and v_y),
+# each channel is quantized to 0-255.
+node: {
+  calculator: "FlowToImageCalculator"
+  input_stream: "forward_flow"
+  output_stream: "flow_frames"
+  node_options: {
+    [type.googleapis.com/mediapipe.FlowToImageCalculatorOptions]: {
+      min_value: -20.0
+      max_value: 20.0
+    }
+  }
 }

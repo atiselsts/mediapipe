@@ -95,7 +95,8 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
   private static final int NUM_BUFFERS = 2;
 
   private static final String OUTPUT_WASHING_STATUS = "washing_status";
-  private static final String OUTPUT_IMAGE_FRAMES = "output_video_cpu";
+//  private static final String OUTPUT_IMAGE_FRAMES = "output_video_cpu";
+    private static final String OUTPUT_IMAGE_FRAMES = "flow_frames";
 
   private static final String OUTPUT_IMAGE_COMPOSITE = "composite_image_cpu";
 
@@ -133,12 +134,16 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
   private ApplicationInfo applicationInfo;
 
   // there is no method to query the number of channels exported to Java, so just assume 4
-  private final int IMAGE_NUM_CHANNELS = 4;
+  private final int IMAGE_NUM_CHANNELS = 3;
 
   int numPackets = 0;
 
   ByteBuffer buffer;
   ByteBuffer buffer2;
+
+    int frameNum = 0;
+
+    File currentPath = null;
 
   Thread uploadThread;
 
@@ -212,6 +217,26 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
         return false;
     }
 
+    private File findNewPath() {
+        if (currentPath != null) {
+            return currentPath;
+        }
+        File f = this.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        for (int i = 0; i < 100; i++) {
+            File path = new File(f, "recordings-" + i);
+            if (path.exists()) {
+                continue;
+            }
+            if (!path.mkdirs()) {
+                Log.e(TAG, "lolcat: Directory not created");
+                continue;
+            }
+            currentPath = path;
+            return path;
+        }
+        return null;
+    }
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -280,6 +305,7 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
     */
 
     // composite image, for debugging
+    /*
     processor.addPacketCallback(
             OUTPUT_IMAGE_COMPOSITE,
             (packet) -> {
@@ -327,6 +353,7 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
                     Log.e(TAG, "lolcat: ext storage not writable");
                 }
             });
+    */
 
     processor.addPacketCallback(
             OUTPUT_IMAGE_FRAMES,
@@ -348,6 +375,8 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
                 if (buffer == null || buffer.capacity() != bbSize) {
                     buffer = ByteBuffer.allocateDirect(bbSize);
                     // bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                } else {
+                    buffer.rewind();
                 }
 
                 if (PacketGetter.getImageData(packet, buffer)) {
@@ -356,36 +385,37 @@ public class MainActivity extends AppCompatActivity implements TaskListener {
                     NotificationThread nt = new NotificationThread(buffer);
                     nt.addListener(this);
                     synchronized ( this ){
-                        uploadThread = new Thread(nt);
+                         uploadThread = new Thread(nt);
                     }
                     uploadThread.start();
 
-                    // if (isExternalStorageWritable()) {
-                    //     try {
-                    //         File path = new File(this.getExternalFilesDir(
-                    //                         Environment.DIRECTORY_PICTURES), "iswashing");
-                    //         if (!path.exists() && !path.mkdirs()) {
-                    //             Log.e(TAG, "lolcat: Directory not created");
-                    //         } else {
-                    //             File file = new File(path, "camera-image.rgb");
-                    //             if (file.exists()) {
-                    //                 Log.e(TAG, "lolcat: already exists");
-                    //             } else {
-                    //                 FileOutputStream stream = new FileOutputStream(file);
-                    //                 try {
-                    //                     stream.getChannel().write(buffer);
-                    //                 } finally {
-                    //                     stream.close();
-                    //                 }
-                    //                 Log.e(TAG, "lolcat: saved to file: " + file.toString() + " bytes=" + buffer.array().length);
-                    //             }
-                    //         }
-                    //     } catch (IOException ex) {
-                    //         Log.e(TAG, "lolcat: io exception: " + ex);
-                    //     }
-                    // } else {
-                    //     Log.e(TAG, "lolcat: ext storage not writable");
-                    // }
+                    /*
+                    if (isExternalStorageWritable()) {
+                        try {
+                            File path = findNewPath();
+                            if (path != null) {
+                                File file = new File(path, "" + frameNum + "-camera" + packet.getTimestamp() + ".rgb");
+                                if (file.exists()) {
+                                    Log.e(TAG, "lolcat: already exists");
+                                } else {
+                                    FileOutputStream stream = new FileOutputStream(file);
+                                    try {
+                                        stream.getChannel().write(buffer);
+                                    } finally {
+                                        stream.close();
+                                    }
+                                    Log.e(TAG, "lolcat: saved to file: " + file.toString() + " bytes=" + buffer.capacity());
+                                }
+                                frameNum += 1;
+                            } else {
+                                Log.e(TAG, "lolcat: failed to find path");
+                            }
+                        } catch (IOException ex) {
+                            Log.e(TAG, "lolcat: io exception: " + ex);
+                        }
+                    } else {
+                        Log.e(TAG, "lolcat: ext storage not writable");
+                    } */
 
                     // StringBuilder sb = new StringBuilder();
                     // for (byte b : arr) {

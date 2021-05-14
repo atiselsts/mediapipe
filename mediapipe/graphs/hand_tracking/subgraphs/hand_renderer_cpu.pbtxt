@@ -203,7 +203,7 @@ node {
   input_stream: "detection_render_data"
   input_stream: "multi_hand_rects_render_data"
   input_stream: "multi_palm_rects_render_data"
-  input_stream: "handedness_render_data"
+#  input_stream: "handedness_render_data"
   input_stream: "VECTOR:0:multi_hand_landmarks_render_data"
   output_stream: "IMAGE:output_image"
 }

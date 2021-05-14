@@ -33,7 +33,7 @@ android_binary(
         "applicationId": "com.google.mediapipe.apps.washingmovements",
         "appName": "Washing Movements",
         "mainActivity": "com.google.mediapipe.apps.washingmovements.MainActivity",
-        "cameraFacingFront": "True",
+        "cameraFacingFront": "False",
         "binaryGraphName": "washing_movements_mobile_gpu.binarypb",
         "inputVideoStreamName": "input_video",
         "outputVideoStreamName": "output_video",

@@ -33,9 +33,9 @@ cc_library(
     ]),
     includes = [
         # For OpenCV 3.x
-        "include/",
+        #"include/",
         # For OpenCV 4.x
-        # "include/opencv4/",
+        "include/opencv4/",
     ],
     linkstatic = 1,
     visibility = ["//visibility:public"],

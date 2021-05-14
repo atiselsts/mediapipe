@@ -19,7 +19,12 @@ cc_library(
         "//mediapipe/calculators/util:labels_to_render_data_calculator",
         "//mediapipe/calculators/image:image_cropping_calculator",
         "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
-        "//mediapipe/modules/hand_washing:washing_movements_gpu"
+        "//mediapipe/modules/hand_washing:washing_movements_gpu",
+
+        "//mediapipe/calculators/core:packet_inner_join_calculator",
+        "//mediapipe/calculators/core:sequence_shift_calculator",
+        "//mediapipe/calculators/video:flow_to_image_calculator",
+        "//mediapipe/calculators/video:tvl1_optical_flow_calculator",
     ],
 )
 

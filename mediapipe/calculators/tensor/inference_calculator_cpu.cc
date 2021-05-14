@@ -95,13 +95,6 @@ absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 
-  for (int i = 0; i < input_tensors.size(); ++i) {
-      LOG(ERROR) << "lolcat: passed input " <<  i << " shape=";
-      std::for_each(input_tensors[i].shape().dims.begin(), input_tensors[i].shape().dims.end(), [](int j) {
-          LOG(ERROR) << "lolcat: " <<  j << " x ";
-      });
-  }
-
   // Read CPU input into tensors.
   for (int i = 0; i < input_tensors.size(); ++i) {
     const Tensor* input_tensor = &input_tensors[i];
@@ -159,20 +152,6 @@ absl::Status InferenceCalculatorCpuImpl::LoadModel(CalculatorContext* cc) {
   // TODO: Support quantized tensors.
   CHECK(interpreter_->tensor(interpreter_->inputs()[0])->quantization.type !=
         kTfLiteAffineQuantization);
-
-
-  const auto& input_indices = interpreter_->inputs();
-  LOG(ERROR) << "lolcat: num inputs: " << input_indices.size();
-  for (int i = 0; i < input_indices.size(); ++i) {
-    const TfLiteTensor* tensor = interpreter_->tensor(input_indices[i]);
-    LOG(ERROR) << "lolcat: input " << i << " shape=";
-    std::vector<int> v = std::vector<int>{
-        tensor->dims->data, tensor->dims->data + tensor->dims->size};
-    std::for_each(v.begin(), v.end(), [](int j) {
-        LOG(ERROR) << "lolcat: " <<  j << " x ";
-    });
-  }
-
 
   return absl::OkStatus();
 }

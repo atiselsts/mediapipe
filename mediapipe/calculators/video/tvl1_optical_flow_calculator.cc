@@ -153,6 +153,14 @@ absl::Status Tvl1OpticalFlowCalculator::Process(CalculatorContext* cc) {
 absl::Status Tvl1OpticalFlowCalculator::CalculateOpticalFlow(
     const ImageFrame& current_frame, const ImageFrame& next_frame,
     OpticalFlowField* flow) {
+    
+    struct timeval tv;
+    int err = gettimeofday(&tv, 0);
+    double start_sec = tv.tv_sec + tv.tv_usec / 1000000.0;
+    if (err != 0) {
+        LOG(ERROR) << "failed to get time";
+    }
+
   CHECK(flow);
   if (!ImageSizesMatch(current_frame, next_frame)) {
     return tool::StatusInvalid("Images are different sizes.");
@@ -183,6 +191,14 @@ absl::Status Tvl1OpticalFlowCalculator::CalculateOpticalFlow(
     absl::MutexLock lock(&mutex_);
     tvl1_computers_.push_back(tvl1_computer);
   }
+
+  err = gettimeofday(&tv, 0);
+  if (err != 0) {
+      LOG(ERROR) << "failed to get time at end";
+  }
+  double end_sec = tv.tv_sec + tv.tv_usec / 1000000.0;
+  LOG(ERROR) << "time diff=" << (end_sec - start_sec);
+
   return absl::OkStatus();
 }
 
